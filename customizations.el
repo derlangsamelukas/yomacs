@@ -193,9 +193,9 @@ If SKIP-COMMENTS is non-nil, comment nodes are ignored."
 
 ;; hooks ... @todo search place for each mode
 
-(add-hook java-mode-hook  'my-c-set-offset-to-0)
-(add-hook c++-mode-hook   (=>> (my-c-set-offset-to-0) (define-key c++-mode-map (kbd "C-d") 'duplicate-current-line)))
-(add-hook c-mode-hook     (=>> (define-key c-mode-map (kbd "C-d") 'duplicate-current-line)))
+(add-hook 'java-mode-hook  'my-c-set-offset-to-0)
+(add-hook 'c++-mode-hook   (=>> (my-c-set-offset-to-0) (define-key c++-mode-map (kbd "C-d") 'duplicate-current-line)))
+(add-hook 'c-mode-hook     (=>> (define-key c-mode-map (kbd "C-d") 'duplicate-current-line)))
 (add-hook
  'ivy-mode-hook
  (lambda ()
