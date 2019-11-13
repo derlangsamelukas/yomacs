@@ -1,0 +1,2 @@
+# yomacs
+my emacs configuration
