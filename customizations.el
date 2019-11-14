@@ -115,41 +115,58 @@ If point was already at that position, move point to beginning of line."
  (lambda () (define-key html-mode-map (kbd "DEL") 'yo-backspace)))
 
 ;; js
+
+(require 'yo-js-modules)
+
+(add-hook
+ 'company-mode-hook
+ (lambda ()
+   (add-to-list 'company-backends 'yo-js-company-backend)))
+
+(add-hook 'js-mode-hook 'yo-js-project-hook)
+
+(add-hook
+ 'rjsx-mode-hook
+ (lambda ()
+   (js2-highlight-undeclared-vars)
+   (js2-highlight-unused-variables)
+   (js2-highlight-vars-mode)))
+
 (add-hook
  'js-mode-hook
  (lambda ()
    (defun js2-node-at-point (&optional pos skip-comments)
-     "Return AST node at POS, a buffer position, defaulting to current point.
+   "Return AST node at POS, a buffer position, defaulting to current point.
 The `js2-mode-ast' variable must be set to the current parse tree.
 Signals an error if the AST (`js2-mode-ast') is nil.
 Always returns a node - if it can't find one, it returns the root.
 If SKIP-COMMENTS is non-nil, comment nodes are ignored."
-     (let ((ast js2-mode-ast)
-           result)
-       (when ast
-         ;; Look through comments first, since they may be inside nodes that
-         ;; would otherwise report a match.
-         (setq pos (or pos (point))
-               result (if (> pos (js2-node-abs-end ast))
-                          ast
-                        (if (not skip-comments)
-                            (js2-comment-at-point pos))))
-         (unless result
-           (setq js2-discovered-node nil
-                 js2-visitor-offset 0
-                 js2-node-search-point pos)
-           (unwind-protect
-               (catch 'js2-visit-done
-                 (js2-visit-ast ast #'js2-node-at-point-visitor))
-             (setq js2-visitor-offset nil
-                   js2-node-search-point nil))
-           (setq result js2-discovered-node))
-         ;; may have found a comment beyond end of last child node,
-         ;; since visiting the ast-root looks at the comment-list last.
-         (if (and skip-comments
-                  (js2-comment-node-p result))
-             (setq result nil))
-         (or result js2-mode-ast))))))
+   (let ((ast js2-mode-ast)
+         result)
+     (when ast
+       ;; Look through comments first, since they may be inside nodes that
+       ;; would otherwise report a match.
+       (setq pos (or pos (point))
+             result (if (> pos (js2-node-abs-end ast))
+                        ast
+                      (if (not skip-comments)
+                          (js2-comment-at-point pos))))
+       (unless result
+         (setq js2-discovered-node nil
+               js2-visitor-offset 0
+               js2-node-search-point pos)
+         (unwind-protect
+             (catch 'js2-visit-done
+               (js2-visit-ast ast #'js2-node-at-point-visitor))
+           (setq js2-visitor-offset nil
+                 js2-node-search-point nil))
+         (setq result js2-discovered-node))
+       ;; may have found a comment beyond end of last child node,
+       ;; since visiting the ast-root looks at the comment-list last.
+       (if (and skip-comments
+                (js2-comment-node-p result))
+           (setq result nil))
+       (or result js2-mode-ast))))))
 
 ;; org
 (add-hook
@@ -172,9 +189,14 @@ If SKIP-COMMENTS is non-nil, comment nodes are ignored."
    (add-to-list 'eshell-visual-subcommands '("npm" "start"))))
 
 ;; paredit
-;; (add-hook 'lisp-mode-hook 'paredit-mode)
-;; (add-hook 'emacs-lisp-mode-hook 'paredit-mode)
-(add-hook 'scheme-mode-hook 'paredit-mode)
+(when (package-installed-p 'paredit)
+  (add-hook 'lisp-mode-hook 'paredit-mode)
+  (add-hook 'emacs-lisp-mode-hook 'paredit-mode)
+  (add-hook 'scheme-mode-hook 'paredit-mode))
+
+;; yo overlay
+(require 'yo-overlay)
+(yo-overlay-add-hooks)
 
 ;; global key bindings
 (global-set-key (kbd "<f6>")    'iedit-mode)

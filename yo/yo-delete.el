@@ -16,7 +16,7 @@ This command does not push text to `kill-ring'."
 With argument, do this that many times.
 This command does not push text to `kill-ring'."
   (interactive "p")
-  (delete-word (- arg)))
+  (yo-delete-word (- arg)))
 
 (defun yo-delete-line ()
   "Delete text from current position to end of line char.
