@@ -32,6 +32,14 @@
     (setf (cdr (assoc 'modules project))
           (list (yo-js-load-modules (car project))))))
 
+(defun yo-js-project-add-node-submodule (symbol)
+  (interactive "Senter module: ")
+  (let ((project (yo-js-files-project)))
+    (unless project
+      (error "you are not in a managed file"))
+    (nconc (cadr (assoc 'node-modules project))
+           (yo-js-load-node-modules (car project) `((,symbol))))))
+
 (defun yo-js-files-project (&optional filename)
   (let* ((filename (or filename (buffer-file-name)))
          (matches (lambda (key) (string-match-p (concat "^" (regexp-quote key)) filename))))
@@ -104,7 +112,7 @@
   (concat
    "const req = (n) => {try {return require(n);}catch(e){return {};}};"
    "const filter = (x) => !/DO_NOT_USE/.test(x);"
-   "const map = (l, n) => l.concat(Object.keys(req(n)).filter(filter).map((k) => k === 'default' ?`(\"${n}\" (module \"${n}\") (default t))` :`(\"${k}\" (module \"${n}\"))`));"
+   "const map = (l, n) => l.concat(Object.keys(req(n)).filter(filter).map((k) => k === 'default' ?`(\"${n.split('-')[0]}\" (module \"${n}\") (default t))` :`(\"${k}\" (module \"${n}\"))`));"
    "const listit = (l) => `(${l.reduce(map, []).join(' ')})`;"))
 
 (defun yo-js-load-node-modules (directory list)
@@ -311,39 +319,53 @@
 (defun yo-js-node-modules-info (word &optional project)
   (yo-js-thingis-info 'node-modules word project))
 
-(defun yo-js-find-missing-module ()
-  (interactive "")
+(defun yo-js-info (word module-cc node-module-cc not-found-cc)
   (let* ((project (yo-js-files-project))
-         (module-find
-          (lambda (p n d)
-            (yo-js-add-import (yo-js-navigate-path (buffer-file-name) (yo-pathifism (car project) p)) n d)))
-         (word (current-word))
          (candidates
           (append
            (mapcar
             (lambda (info)
               (list (substring (cadr (assoc 'file info)) (length (car project)))
-                    module-find
-                    (cadr (assoc 'default info))))
+                    module-cc
+                    info))
             (yo-js-modules-info word project))
            (mapcar
             (lambda (info)
               (list (cadr (assoc 'module info))
-                    'yo-js-add-import
-                    (cadr (assoc 'default info))))
+                    node-module-cc
+                    info))
             (yo-js-node-modules-info word project)))))
-    (pcase
-        (if (cdr candidates)
-            (assoc
-             (completing-read
-              (format "select module for %s: " word)
-              candidates
-              nil
-              t)
-             candidates)
-          (car candidates))
-      (`(,name ,f ,d)
-       (funcall f name word d)))))
+    (if candidates
+        (pcase
+            (if (cdr candidates)
+                (assoc
+                 (completing-read
+                  (format "select module for %s: " word)
+                  candidates
+                  nil
+                  t)
+                 candidates)
+              (car candidates))
+          (`(,name ,f ,i)
+           (funcall f i project)))
+      (funcall not-found-cc))))
+
+(defun yo-js-find-missing-module ()
+  (interactive)
+  (yo-js-info
+   (current-word)
+   (lambda (info project)
+     (yo-js-add-import
+      (yo-js-navigate-path (buffer-file-name) (cadr (assoc 'file info)))
+      (car info)
+      (cadr (assoc 'default info))))
+   (lambda (info project)
+     (yo-js-add-import
+      (cadr (assoc 'module info))
+      (car info)
+      (cadr (assoc 'default info))))
+   (lambda ()
+     (message "no module found..."))))
 
 (defun yo-js-project-hook ()
   (when (and (not (eq 'rjsx-mode major-mode)) (yo-js-files-project))
