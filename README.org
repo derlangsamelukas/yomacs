@@ -1,0 +1,8 @@
+* yomacs
+my emacs configuration
+
+** Todo's
+   + [ ] prefix all miscellaneous functions with yo-
+   + [ ] backend yo-js-company-backend error "Wrong type argument: stringp, nil" with args (prefix)
+   + [ ] autopair not working correctly in rjsx-mode
+   + [ ] cannot choose package when multiple symbols with the same name are exported from different packages
