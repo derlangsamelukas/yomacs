@@ -21,7 +21,7 @@
   (require 'json)
   (let ((directory (file-name-directory package-json-file)))
     (setf (gethash directory *yo-js-scopes*)
-          `((node-modules ,(yo-js-load-node-modules directory (mapcar 'symbol-name (mapcar 'car (cdr (assoc 'dependencies (json-read-file package-json-file)))))))
+          `((node-modules ,(yo-js-load-node-modules directory (cdr (assoc 'dependencies (json-read-file package-json-file)))))
             (modules ,(yo-js-load-modules directory))))))
 
 (defun yo-js-project-rehash ()
@@ -55,23 +55,6 @@
                               (substring path 0 (- (length (file-name-extension path t)))))))))
       (runner from to))))
 
-(defun yo-js-module-find (&optional name)
-  (interactive)
-  (let* ((name (or name (current-word)))
-         (addit (lambda (alist)
-                 (yo-js-add-import (yo-js-navigate-path (buffer-file-name) (cadr (assoc 'file alist)))
-                                name
-                                (cadr (assoc 'default alist))))))
-    (pcase (cl-remove-if-not
-            (lambda (x) (string-equal name (car x)))
-            (cadr (assoc 'modules (cdr (yo-js-files-project)))))
-      ('() (message "no module found which exports '%s'" name))
-      (`((,_ . ,alist))
-       (funcall addit alist))
-      (list
-       (print list)
-       (funcall addit (cdr (assoc (completing-read "From which namespace do want to import? " (mapcar 'car list) nil t) list)))))))
-
 (defun yo-js-word-after-match (data cc)
   (save-excursion
     (pcase data
@@ -96,22 +79,33 @@
                                 (yo-js-word-after-match data (lambda (word) (add word file)))))
       (mapc
        (lambda (file)
-         (with-current-buffer (find-file file)
-           (unless (eq 'rjsx-mode major-mode)
-             (rjsx-mode))
-           (save-excursion
-             (goto-char (point-min))
-             (while (re-search-forward "^[[:space:]]*export[[:space:]]+\\([[:word:]]+\\)[[:space:]]+" nil t)
-               (pcase (match-string-no-properties 1)
-                 ("default" (add (file-name-base file) file t))
-                 ("function" (maybe-add-next (match-data 1) file))
-                 ("let" (maybe-add-next (match-data 1) file))
-                 ("const" (maybe-add-next (match-data 1) file))
-                 ("var" (maybe-add-next (match-data 1) file))
-                 (x (add x file)))))
-           (quit-window)))
+         (let ((quit-window nil))
+           (with-current-buffer (find-file file)
+             (unless (eq 'rjsx-mode major-mode)
+               (rjsx-mode)
+               (setf quit-window t))
+             (save-excursion
+               (goto-char (point-min))
+               (while (re-search-forward "^[[:space:]]*export[[:space:]]+\\([[:word:]]+\\)[[:space:]]+" nil t)
+                 (pcase (match-string-no-properties 1)
+                   ("default" (add (file-name-base file) file t))
+                   ("function" (maybe-add-next (match-data 1) file))
+                   ("let" (maybe-add-next (match-data 1) file))
+                   ("const" (maybe-add-next (match-data 1) file))
+                   ("var" (maybe-add-next (match-data 1) file))
+                   (x (add x file)))))
+             (when quit-window
+               (quit-window)))))
        files))
     dict))
+
+(defun yo-js-load-node-modules-node-function ()
+  "@todo"
+  (concat
+   "const req = (n) => {try {return require(n);}catch(e){return {};}};"
+   "const filter = (x) => !/DO_NOT_USE/.test(x);"
+   "const map = (l, n) => l.concat(Object.keys(req(n)).filter(filter).map((k) => k === 'default' ?`(\"${n}\" (module \"${n}\") (default t))` :`(\"${k}\" (module \"${n}\"))`));"
+   "const listit = (l) => `(${l.reduce(map, []).join(' ')})`;"))
 
 (defun yo-js-load-node-modules (directory list)
   (car
@@ -123,11 +117,11 @@
       " && node -e "
       (shell-quote-argument
        (concat
-        "deps = ["
-        (join ", " (mapcar (lambda (name) (concat "\"" name "\"")) list))
+        "const DEPENDENCIES = ["
+        (join ", " (mapcar (lambda (name) (concat "\"" (symbol-name (car name)) "\"")) list))
         "];"
-        "const f = (n) => {try {return require(n);}catch(e){return {};}};"
-        "console.log('(' + deps.map((n) => '(' + n + ' ' + Object.keys(f(n)).join(' ') + ')').join(' ') + ')')")))))))
+        (yo-js-load-node-modules-node-function)
+        "console.log(listit(DEPENDENCIES));")))))))
 
 (defun yo-js-import-insert-name (name end)
   (unless (string-equal name (current-word))
@@ -164,42 +158,22 @@
           (insert "\n" import))
         t))))
 
-(defun yo-js-node-module-find (&optional name)
-  (interactive)
-  (let* ((name (intern (or name (current-word))))
-         (found-ones
-          (cl-remove-if-not
-           (lambda (pair) (cl-find name (cdr pair)))
-           (cadr (assoc 'node-modules (cdr (yo-js-files-project)))))))
-    (when found-ones
-      (yo-js-add-import (format "%s" (caar found-ones)) (format "%s" name)))))
-
-
-(defun yo-js-node-module-search ()
-  (interactive)
-  (yo-js-node-module-find (completing-read "Search: " (cl-reduce (lambda (l x) (append l (cdr x))) deps :initial-value nil))))
-
 (defun yo-js-project-find-candidates-for-node-modules (project)
-  (mapcan
-   'cdr
-   (mapcar
-    (lambda (x) (mapcar (lambda (x) (propertize (symbol-name x) 'yo-data 'yo-js-node-module-find)) x))
-    (cadr
-     (assoc
-      'node-modules
-      (cdr (yo-js-files-project)))))))
+  (mapcar
+   'car
+   (cadr (assoc 'node-modules (cdr (yo-js-files-project))))))
 
 (defun yo-js-project-find-candidates-for-modules (project)
   (mapcar
-   (lambda (x)
-     (propertize (car x) 'yo-data 'yo-js-module-find))
-   (cadr (assoc 'modules (yo-js-files-project)))))
+   'car
+   (cadr (assoc 'modules (cdr (yo-js-files-project))))))
 
 (defun yo-js-project-find-candidates (project f)
-  (cl-remove-if-not
-   f
-   (append (yo-js-project-find-candidates-for-node-modules project)
-           (yo-js-project-find-candidates-for-modules project))))
+  (remove-duplicates
+   (cl-remove-if-not
+    f
+    (append (yo-js-project-find-candidates-for-node-modules project)
+            (yo-js-project-find-candidates-for-modules project)))))
 
 (defun yo-js-company-backend (command &optional arg &rest ignored)
   (cl-case command
@@ -208,19 +182,19 @@
      (when (derived-mode-p 'rjsx-mode)
        (let* ((project (yo-js-files-project))
               (word (company-grab-word))
-              (regexp (concat "^" (regexp-quote word))))
+              (regexp (concat "^" (regexp-quote (or word "")))))
          (and project
+              word ;; this maybe nil, so the candidates don't need to be collected
               (yo-js-project-find-candidates project (lambda (x) (string-match-p regexp x)))
               word))))
     ('candidates
      (let ((regexp (concat "^" (regexp-quote arg))))
        (yo-js-project-find-candidates (yo-js-files-project) (lambda (x) (string-match-p regexp x)))))
-    ('post-completion
-     (let ((f (get-text-property 0 'yo-data arg)))
-       (when f
-         (funcall f))))))
-
-;; xxxx
+    ;; ('post-completion
+    ;;  (let ((f (get-text-property 0 'yo-data arg)))
+    ;;    (when f
+    ;;      (funcall f))))
+    ))
 
 (defun yo-js-src-folder ()
   (yo-pathifism (car (yo-js-files-project)) "src/"))
@@ -327,14 +301,49 @@
   (interactive)
   (yo-js-split-view/container 'split-window-horizontally))
 
-(add-hook 'rjsx-mode-hook
-          (lambda ()
-            (define-key rjsx-mode-map (kbd "C-c C-c") 'yo-js-switch-to-view/container)
-            (define-key rjsx-mode-map (kbd "C-c 2") 'yo-js-split-view/container-vertically)
-            (define-key rjsx-mode-map (kbd "C-c 3") 'yo-js-split-view/container-horizontally)))
+(defun yo-js-thingis-info (key word &optional project)
+  (let ((modules (cadr (assoc key (cdr (or project (yo-js-files-project)))))))
+    (cl-remove-if-not (lambda (x) (string-equal word (car x))) modules)))
 
+(defun yo-js-modules-info (word &optional project)
+  (yo-js-thingis-info 'modules word project))
 
-;; yyyy
+(defun yo-js-node-modules-info (word &optional project)
+  (yo-js-thingis-info 'node-modules word project))
+
+(defun yo-js-find-missing-module ()
+  (interactive "")
+  (let* ((project (yo-js-files-project))
+         (module-find
+          (lambda (p n d)
+            (yo-js-add-import (yo-js-navigate-path (buffer-file-name) (yo-pathifism (car project) p)) n d)))
+         (word (current-word))
+         (candidates
+          (append
+           (mapcar
+            (lambda (info)
+              (list (substring (cadr (assoc 'file info)) (length (car project)))
+                    module-find
+                    (cadr (assoc 'default info))))
+            (yo-js-modules-info word project))
+           (mapcar
+            (lambda (info)
+              (list (cadr (assoc 'module info))
+                    'yo-js-add-import
+                    (cadr (assoc 'default info))))
+            (yo-js-node-modules-info word project)))))
+    (pcase
+        (if (cdr candidates)
+            (assoc
+             (completing-read
+              (format "select module for %s: " word)
+              candidates
+              nil
+              t)
+             candidates)
+          (car candidates))
+      (`(,name ,f ,d)
+       (funcall f name word d)))))
 
 (defun yo-js-project-hook ()
   (when (and (not (eq 'rjsx-mode major-mode)) (yo-js-files-project))

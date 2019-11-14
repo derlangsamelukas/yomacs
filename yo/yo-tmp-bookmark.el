@@ -26,12 +26,12 @@
 (defun jump-to-tmp-bookmark ()
   (interactive)
   (jump-to-f-on-tmp-bookmark tmp-bookmark-markers
-			     (=>>)))
+			     (lambda ())))
 
 (defun pop-tmp-bookmark ()
   (interactive)
   (jump-to-f-on-tmp-bookmark tmp-bookmark-markers
-			     (=>> (pop tmp-bookmark-markers))))
+			     (lambda () (pop tmp-bookmark-markers))))
 
 
 (defun jump-to-last-tmp-bookmark&push-old-point ()

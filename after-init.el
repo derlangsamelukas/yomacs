@@ -6,13 +6,14 @@
     (setf continue (package-install-selected-packages)))
 
   (when continue
-    (require 'autopair)
     (require 'company)
     (require 'ivy)
     (require 'smooth-scrolling)
     (require 'yasnippet)
     (require 'yo-mode-line)
-    (autopair-global-mode 1)
+    (require 'electric)
+    (electric-pair-mode 1)
+    (electric-indent-mode)
     (global-company-mode)
     (ivy-mode 1)
     (show-paren-mode)

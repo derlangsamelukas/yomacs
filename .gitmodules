@@ -1,3 +1,0 @@
-[submodule "extensions-from-git/autopair"]
-	path = extensions-from-git/autopair
-	url = https://github.com/joaotavora/autopair.git
