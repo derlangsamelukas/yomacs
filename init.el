@@ -36,8 +36,7 @@
  '(idris-interpreter-flags '("-p" "contrib"))
  '(initial-frame-alist '((fullscreen . maximized)))
  '(ivy-youtube-play-at "firefox")
- '(js2-ignored-warnings
-   '("missing ; after statement" "missing ; before statement" "msg.no.semi.stmt" "msg.missing.semi"))
+ '(js2-ignored-warnings nil)
  '(menu-bar-mode nil)
  '(merlin-command "ocamlmerlin")
  '(org-src-block-faces '(("emacs-lisp" (:background "#F0FFF0"))))
@@ -93,6 +92,8 @@
  '(font-lock-comment-face ((t (:foreground "#8B8989" :slant normal))))
  '(fringe ((t (:background "#1a161f" :foreground "#dcdccc"))))
  '(js2-external-variable ((t (:foreground "color-197"))))
+ '(js2-function-call ((t (:inherit default :foreground "cyan"))))
+ '(js2-object-property ((t (:inherit default :foreground "medium aquamarine"))))
  '(mode-line ((t (:background "#1a161f" :foreground "#4c83ff" :box nil))))
  '(mode-line-inactive ((t (:background "#1a161f" :foreground "#4D4D4D" :box nil)))))
 

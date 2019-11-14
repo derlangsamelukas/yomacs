@@ -1,0 +1,6 @@
+import { compose } from 'redux';
+import $1 from '$0';
+
+export default compose(
+
+)($1);

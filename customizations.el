@@ -79,6 +79,12 @@ If point was already at that position, move point to beginning of line."
   (insert "\n")
   (indent-for-tab-command))
 
+(defun yo-yank ()
+  (interactive)
+  (let ((start (point)))
+    (yank)
+    (indent-region start (point))))
+
 ;; miscellaneous functions
 
 (defun yo-set-background-transparent ()
@@ -128,6 +134,7 @@ If point was already at that position, move point to beginning of line."
 (add-hook
  'rjsx-mode-hook
  (lambda ()
+   (define-key rjsx-mode-map (kbd "DEL") 'yo-backspace)
    (js2-highlight-undeclared-vars)
    (js2-highlight-unused-variables)
    (js2-highlight-vars-mode)))
@@ -182,11 +189,24 @@ If SKIP-COMMENTS is non-nil, comment nodes are ignored."
    (dired-hide-details-mode 1)))
 
 ;; eshell
+(defun my-eshell-get-prompt-regex ()
+    "^ →  ")
+
+(defun my-eshell-prompt-function ()
+  (concat
+   " "
+   (propertize "→ " 'face '(:foreground "#eb0e69"))
+   " "))
+
+(setq eshell-prompt-regexp (my-eshell-get-prompt-regex))
+(setq eshell-prompt-function 'my-eshell-prompt-function)
+
 (add-hook
  'eshell-mode-hook
  (lambda ()
    (company-mode -1)
-   (add-to-list 'eshell-visual-subcommands '("npm" "start"))))
+   (add-to-list 'eshell-visual-subcommands '("git" "diff" "log" "show"))
+   (add-to-list 'eshell-visual-subcommands '("npm" "test" "start" "install"))))
 
 ;; paredit
 (when (package-installed-p 'paredit)
@@ -195,8 +215,9 @@ If SKIP-COMMENTS is non-nil, comment nodes are ignored."
   (add-hook 'scheme-mode-hook 'paredit-mode))
 
 ;; yo overlay
-(require 'yo-overlay)
-(yo-overlay-add-hooks)
+(when (package-installed-p 'auto-overlays)
+  (require 'yo-overlay)
+  (yo-overlay-add-hooks))
 
 ;; global key bindings
 (global-set-key (kbd "<f6>")    'iedit-mode)
@@ -214,6 +235,7 @@ If SKIP-COMMENTS is non-nil, comment nodes are ignored."
 (global-set-key (kbd "C-s")     'isearch-forward)
 (global-set-key (kbd "C-a") 'smart-beginning-of-line)
 (global-set-key (kbd "C-c -") 'comment-or-uncomment-region)
+(global-set-key (kbd "C-y") 'yo-yank)
 
 (global-unset-key (kbd "<insert>"))
 (global-unset-key (kbd "<insertchar>"))
