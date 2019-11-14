@@ -134,7 +134,10 @@ If point was already at that position, move point to beginning of line."
 (add-hook
  'rjsx-mode-hook
  (lambda ()
+   (require 'swiper)
    (define-key rjsx-mode-map (kbd "DEL") 'yo-backspace)
+   (define-key rjsx-mode-map (kbd "C-d") 'duplicate-current-line)
+   (define-key rjsx-mode-map (kbd "C-c s") 'swiper-all)
    (js2-highlight-undeclared-vars)
    (js2-highlight-unused-variables)
    (js2-highlight-vars-mode)))
