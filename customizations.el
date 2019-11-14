@@ -1,10 +1,10 @@
 (let ((add-path (lambda (path) (add-to-list 'load-path (concat user-emacs-directory path)))))
   (mapc
    add-path
-   '("extensions_from_git/autopair"
-     "extensions_fom_git/malabar-mode"
-     "extensions_fom_git/auto-overlays"
-     "user-plugins")))
+   '("extensions-from-git/autopair"
+     "extensions-from-git/malabar-mode"
+     "extensions-from-git/auto-overlays"
+     "yo")))
 (add-to-list 'load-path "/usr/share/emacs/site-lisp")
 
 ;; default variable definitions
@@ -38,6 +38,11 @@
  line-spacing 4)
 
 ;; miscellaneous functions for key bindings (not related to one specific mode)
+
+(require 'yo-delete);; miscellaneous functions to delete things
+(require 'yo-swap);; functions to wap lines
+(require 'yo-tmp-bookmark)
+
 (defun smart-beginning-of-line ()
   "Move point to first non-whitespace character or beginning-of-line.
 
@@ -167,15 +172,15 @@ If SKIP-COMMENTS is non-nil, comment nodes are ignored."
    (add-to-list 'eshell-visual-subcommands '("npm" "start"))))
 
 ;; paredit
-(add-hook 'lisp-mode-hook 'paredit-mode)
-(add-hook 'emacs-lisp-mode-hook 'paredit-mode)
+;; (add-hook 'lisp-mode-hook 'paredit-mode)
+;; (add-hook 'emacs-lisp-mode-hook 'paredit-mode)
 (add-hook 'scheme-mode-hook 'paredit-mode)
 
 ;; global key bindings
 (global-set-key (kbd "<f6>")    'iedit-mode)
-(global-set-key (kbd "C-h")     'delete-word-backward)
-(global-set-key [(C delete)]    'delete-word)
-(global-set-key (kbd "C-k")     'delete-line)
+(global-set-key (kbd "C-h")     'yo-delete-word-backward)
+(global-set-key [(C delete)]    'yo-delete-word)
+(global-set-key (kbd "C-k")     'yo-delete-line)
 (global-set-key (kbd "C-x x")   'compile)
 (global-set-key [home]          'smart-beginning-of-line)
 (global-set-key (kbd "C-c C-d") 'ace-jump-mode)
@@ -194,11 +199,13 @@ If SKIP-COMMENTS is non-nil, comment nodes are ignored."
 ;; hooks ... @todo search place for each mode
 
 (add-hook 'java-mode-hook  'my-c-set-offset-to-0)
-(add-hook 'c++-mode-hook   (=>> (my-c-set-offset-to-0) (define-key c++-mode-map (kbd "C-d") 'duplicate-current-line)))
-(add-hook 'c-mode-hook     (=>> (define-key c-mode-map (kbd "C-d") 'duplicate-current-line)))
+(add-hook 'c++-mode-hook   (lambda () (my-c-set-offset-to-0) (define-key c++-mode-map (kbd "C-d") 'duplicate-current-line)))
+(add-hook 'c-mode-hook     (lambda () (define-key c-mode-map (kbd "C-d") 'duplicate-current-line)))
 (add-hook
  'ivy-mode-hook
  (lambda ()
    (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-alt-done)))
-(delete 'company-clang company-backends)
 (put 'narrow-to-region 'disabled nil)
+
+(unless (window-system)
+      (yo-set-background-transparent))

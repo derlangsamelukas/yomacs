@@ -21,3 +21,5 @@
        " "
        (:eval (format "%d" (string-to-number (cdr (cadddr (cddddr (battery-linux-sysfs)))))))
        "%%"))))
+
+(provide 'yo-mode-line)

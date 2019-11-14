@@ -98,6 +98,6 @@
 
 (load (concat user-emacs-directory "customizations"))
 (add-hook
- 'after-init-hook
+ 'emacs-startup-hook
  (lambda ()
    (load (concat user-emacs-directory "after-init"))))
