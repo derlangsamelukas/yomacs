@@ -3,6 +3,8 @@ my emacs configuration
 
 ** Todo's
    + [ ] prefix all miscellaneous functions with yo-
-   + [ ] backend yo-js-company-backend error "Wrong type argument: stringp, nil" with args (prefix)
+   + [ ] when in the middle of a word: backend yo-js-company-backend error "Wrong type argument: stringp, nil" with args (prefix)
    + [ ] autopair not working correctly in rjsx-mode
    + [ ] cannot choose package when multiple symbols with the same name are exported from different packages
+   + [ ] unneccessary adding of import when autocompleting (maybe add backend to the end of the list or lower priority)
+   + [ ] yo-js-project-rehash, dont close rjsx buffer if it is the current one (close if file was not opened yet)
