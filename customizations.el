@@ -138,6 +138,7 @@ Indents the line at the end."
 (add-hook
  'rjsx-mode-hook
  (lambda ()
+   (define-key rjsx-mode-map (kbd "C-o") 'yo-json-new-object)
    (define-key rjsx-mode-map (kbd "DEL") 'yo-backspace)
    (define-key rjsx-mode-map (kbd "C-c RET") 'yo-js-find-missing-module)
    (define-key rjsx-mode-map (kbd "C-c C-c") 'yo-js-switch-to-view/container)
