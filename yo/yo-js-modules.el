@@ -110,9 +110,12 @@
 (defun yo-js-load-node-modules-node-function ()
   "@todo"
   (concat
+   "const sig = (str) => /^function/.test(str) ? str.substring(str.indexOf('('), str.indexOf(')') +1) : str.substring(0, str.indexOf('=>'));"
+   "const typ = (x) => typeof x === 'function' ? sig(x.toString()) : typeof x;"
    "const req = (n) => {try {return require(n);}catch(e){return {};}};"
    "const filter = (x) => !/DO_NOT_USE/.test(x);"
-   "const map = (l, n) => l.concat(Object.keys(req(n)).filter(filter).map((k) => k === 'default' ?`(\"${n.split('-')[0]}\" (module \"${n}\") (default t))` :`(\"${k}\" (module \"${n}\"))`));"
+   "const mapit = (l, n, obj) => l.concat(Object.keys(obj).filter(filter).map((k) => k === 'default' ?`(\"${n.split('-')[0]}\" (module \"${n}\") (default t) (type \"${typ(obj[k])}\"))` :`(\"${k}\" (module \"${n}\") (type \"${typ(obj[k])}\"))`));"
+   "const map = (l, n) => mapit(l, n, (req(n)));"
    "const listit = (l) => `(${l.reduce(map, []).join(' ')})`;"))
 
 (defun yo-js-load-node-modules (directory list)
@@ -177,11 +180,12 @@
    (cadr (assoc 'modules (cdr (yo-js-files-project))))))
 
 (defun yo-js-project-find-candidates (project f)
-  (remove-duplicates
+  (cl-remove-duplicates
    (cl-remove-if-not
     f
     (append (yo-js-project-find-candidates-for-node-modules project)
-            (yo-js-project-find-candidates-for-modules project)))))
+            (yo-js-project-find-candidates-for-modules project)))
+   :test 'string-equal))
 
 (defun yo-js-company-backend (command &optional arg &rest ignored)
   (cl-case command
@@ -198,6 +202,9 @@
     ('candidates
      (let ((regexp (concat "^" (regexp-quote arg))))
        (yo-js-project-find-candidates (yo-js-files-project) (lambda (x) (string-match-p regexp x)))))
+    ('meta
+     "huuihui")
+    ;; ('annotation "<a>")
     ;; ('post-completion
     ;;  (let ((f (get-text-property 0 'yo-data arg)))
     ;;    (when f
@@ -319,7 +326,7 @@
 (defun yo-js-node-modules-info (word &optional project)
   (yo-js-thingis-info 'node-modules word project))
 
-(defun yo-js-info (word module-cc node-module-cc not-found-cc)
+(defun yo-js-info (word module-cc node-module-cc not-found-cc &optional package)
   (let* ((project (yo-js-files-project))
          (candidates
           (append
@@ -339,11 +346,13 @@
         (pcase
             (if (cdr candidates)
                 (assoc
-                 (completing-read
-                  (format "select module for %s: " word)
-                  candidates
-                  nil
-                  t)
+                 (or
+                  package
+                  (completing-read
+                   (format "select module for %s: " word)
+                   candidates
+                   nil
+                   t))
                  candidates)
               (car candidates))
           (`(,name ,f ,i)
@@ -389,6 +398,90 @@
     (insert "\n")
     (indent-region start (+ 2 (point)))
     (indent-for-tab-command)))
+
+(defun yo-js-get-vars-in-scope (&optional pos)
+  "mhmh"
+  (interactive)
+  (let ((node (js2-node-at-point pos))
+        (tokens nil)
+        name
+        scope)
+    (unless (js2-name-node-p node)
+      (setq node (js2-node-at-point (- (or pos (point)) 1))))
+    (when (and node (js2-name-node-p node))
+      (setq scope (js2-node-get-enclosing-scope node)
+            name (js2-name-node-name node))
+      (setq scope (js2-get-defining-scope scope name))
+      (with-silent-modifications
+        (js2-visit-ast
+         scope
+         (lambda (node end-p)
+           (when (and (not end-p)
+                      (js2-name-node-p node)
+                      (string= name (js2-name-node-name node)))
+             (let* ((beg (js2-node-abs-pos node))
+                    (end (+ beg (js2-node-len node)))
+                    (new-scope (js2-node-get-enclosing-scope node))
+                    (new-scope (js2-get-defining-scope new-scope name)))
+               (add-to-list 'tokens beg t)))
+           t)))
+      tokens)))
+
+(defun yo-js-get-package-or-marker (&optional pos)
+  (let ((pos (or pos (point))))
+    (let ((tokens (yo-js-get-vars-in-scope pos)))
+      (when tokens
+        (save-excursion
+          (goto-char (car tokens))
+          (if (re-search-forward "['\"]" (line-end-position) t)
+            (let ((start (point)))
+              (backward-char)
+              (forward-sexp)
+              (backward-char)
+              (buffer-substring-no-properties start (point)))
+            (car tokens)))))))
+
+(defun yo-js-goto-definition (name package)
+  (if (string-match-p "^\\.\\.?/" package)
+      (progn
+        (find-file (concat package ".js"))
+        (if (string-equal name (file-name-base package))
+            (re-search-forward "^[[:space:]]*export default ")
+          (re-search-forward (concat "^[[:space:]]*export[[:space:]]+.*" (regexp-quote name)))))
+    (let ((project (yo-js-files-project)))
+      (when project
+        (let ((matches (split-string
+                        (shell-command-to-string
+                         (concat "grep -P -n -R --include '*.js' "
+                                 (shell-quote-argument (concat "((var)|(let)|(const)|(function)) " name " (=|\\()"))
+                                 " "
+                                 (shell-quote-argument (yo-pathifism (car project) "node_modules" package))))
+                        "\n")))
+          (when matches
+            (pcase (split-string (car matches) ":")
+              (`(,file ,line-nr . ,_)
+               (find-file file)
+               (goto-line (string-to-number line-nr))))))))))
+
+(defun yo-js-goto-thing-at-point ()
+  (interactive)
+  (let ((p-or-m (yo-js-get-package-or-marker)))
+    (when p-or-m
+      (if (number-or-marker-p p-or-m)
+          (goto-char p-or-m)
+        (yo-js-goto-definition (current-word) p-or-m)))))
+
+(defun yo-js-type-of-thing-at-point ()
+  (interactive)
+  (let ((p-or-m (yo-js-get-package-or-marker)))
+    (when (and p-or-m (stringp p-or-m))
+      (yo-js-info
+       (current-word)
+       'ignore
+       (lambda (info _)
+         (message (cadr (assoc 'type (cdr info)))))
+       'ignore
+       p-or-m))))
 
 (defun yo-js-project-hook ()
   (when (and (not (eq 'rjsx-mode major-mode)) (yo-js-files-project))

@@ -301,3 +301,8 @@ If SKIP-COMMENTS is non-nil, comment nodes are ignored."
 
 (unless (window-system)
       (yo-set-background-transparent))
+
+;; startup
+(require 'yo-startup)
+(setq initial-buffer-choice 'yo-startup-screen)
+

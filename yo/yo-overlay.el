@@ -32,8 +32,9 @@
      (cdr (assoc name defs)))))
 
 (defun yo-overlay-load-and-start (name)
-  (yo-overlay-load name)
-  (auto-overlay-start name))
+  (when (< (buffer-size) 10000)
+    (yo-overlay-load name)
+    (auto-overlay-start name)))
 
 (defvar *yo-overlay-hooks*
   `((lisp-mode-hook ,(lambda () (yo-overlay-load-and-start 'lisp)))

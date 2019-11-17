@@ -1,3 +1,10 @@
 * yomacs
-my emacs configuration
+  my emacs configuration
 
+
+  - PHP add auto-overlay to hide dollar signs
+  - test if auto overlays work asynchronisely for quicker loading of yo-js-project-init
+  - test nodejs functions.toString() for doc blocks
+  - test for grep of function definition for node modules
+  - js: add jump to definition to projects files
+  - add automatically rehash when file is saved (and maybe only when a new export is added deleted)
