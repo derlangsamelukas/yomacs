@@ -95,7 +95,9 @@
  '(js2-function-call ((t (:inherit default :foreground "cyan"))))
  '(js2-object-property ((t (:inherit default :foreground "medium aquamarine"))))
  '(mode-line ((t (:background "#1a161f" :foreground "#4c83ff" :box nil))))
- '(mode-line-inactive ((t (:background "#1a161f" :foreground "#4D4D4D" :box nil)))))
+ '(mode-line-inactive ((t (:background "#1a161f" :foreground "#4D4D4D" :box nil))))
+ '(web-mode-html-tag-bracket-face ((t (:foreground "color-48"))))
+ '(web-mode-html-tag-face ((t (:foreground "color-39")))))
 
 (load (concat user-emacs-directory "customizations"))
 (add-hook

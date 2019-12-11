@@ -26,7 +26,10 @@
              (word (("\\(^\\|[^[:word:]-]\\)\\(const\\)\\([^[:word:]]\\|$\\)" . 2)
                     (display " ")))
              (word (("\\(^\\|[^[:word:]-]\\)\\(React.memo\\)\\([^[:word:]]\\|$\\)" . 2)
-                    (display "  ")))))))
+                    (display "  "))))
+            (php
+             (word (("\\(^\\|[^[:word:]-]\\)\\(\\$\\)[[:word:]]" . 2)
+                    (display "")))))))
     (mapc
      (lambda (def) (auto-overlay-load-definition name def))
      (cdr (assoc name defs)))))
@@ -39,7 +42,8 @@
 (defvar *yo-overlay-hooks*
   `((lisp-mode-hook ,(lambda () (yo-overlay-load-and-start 'lisp)))
     (emacs-lisp-mode-hook ,(lambda () (yo-overlay-load-and-start 'lisp)))
-    (rjsx-mode-hook ,(lambda () (yo-overlay-load-and-start 'js)))))
+    (rjsx-mode-hook ,(lambda () (yo-overlay-load-and-start 'js)))
+    (php-mode-hook ,(lambda () (yo-overlay-load-and-start 'php)))))
 
 (defmacro fmatch (parameter &rest body)
   `(pcase-lambda (,parameter) ,@body))

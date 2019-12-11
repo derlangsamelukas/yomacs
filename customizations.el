@@ -95,6 +95,11 @@ Indents the line at the end."
   (c-set-offset 'inline-open 0)
   (c-set-offset 'block-open 0))
 
+(defun yo-insert-scope (start end)
+  (insert start)
+  (save-excursion
+    (insert end)))
+
 ;; ocaml
 (autoload 'merlin-mode "merlin" nil t nil)
 (add-hook 'tuareg-mode-hook 'merlin-mode t)
@@ -110,22 +115,64 @@ Indents the line at the end."
        (insert "\n")))))
 
 ;; css
+(defun yo-css-open-brackets ()
+  (interactive)
+  (unless (equal (line-end-position) (line-beginning-position))
+    (newline))
+  (yo-insert-scope "{" "}")
+  (newline nil t))
+
 (add-hook
  'css-mode-hook
  (lambda ()
-   (define-key css-mode-map "DEL" 'yo-backspace)))
+   (define-key css-mode-map (kbd "DEL") 'yo-backspace)
+   (define-key css-mode-map (kbd "C-o") 'yo-css-open-brackets)))
 
 ;; html
 (add-hook
  'html-mode-hook
  (lambda ()
-   (define-key html-mode-map "DEL" 'yo-backspace)))
+   (define-key html-mode-map (kbd "DEL") 'yo-backspace)))
 
 ;; web mode
+
+(defun yo-web-to-tag ()
+  (interactive)
+  (let ((word (thing-at-point 'word)))
+    (beginning-of-thing 'word)
+    (insert "<")
+    (end-of-thing 'word)
+    (insert ">")
+    (save-excursion
+      (insert "</" word ">"))))
+
+(defun yo-web-brackets ()
+  (interactive)
+  (yo-insert-scope "{{ " " }}"))
+
+(defun yo-web-brackets* ()
+  (interactive)
+  (yo-insert-scope "{% " " %}"))
+
+(add-to-list 'auto-mode-alist '("\\.twig" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.html" . web-mode))
+
 (add-hook
  'web-mode-hook
  (lambda ()
-   (define-key web-mode-map "DEL" 'yo-backspace)))
+   (define-key web-mode-map (kbd "DEL") 'yo-backspace)
+   (define-key web-mode-map (kbd "C-c RET") 'yo-web-to-tag)
+   (define-key web-mode-map (kbd "C-o") 'yo-web-brackets)
+   (define-key web-mode-map (kbd "C-c C-o") 'yo-web-brackets*)))
+
+(add-to-list 'auto-mode-alist '("\\.html5$" . web-mode))
+
+;; php mode
+(add-hook
+ 'php-mode-hook
+ (lambda ()
+   (define-key php-mode-map (kbd "DEL") 'yo-js-backspace)
+   (define-key php-mode-map (kbd "RET") 'yo-js-return)))
 
 ;; js
 (require 'yo-js-modules)
@@ -139,7 +186,8 @@ Indents the line at the end."
  'rjsx-mode-hook
  (lambda ()
    (define-key rjsx-mode-map (kbd "C-o") 'yo-json-new-object)
-   (define-key rjsx-mode-map (kbd "DEL") 'yo-backspace)
+   (define-key rjsx-mode-map (kbd "DEL") 'yo-js-backspace)
+   (define-key rjsx-mode-map (kbd "RET") 'yo-js-return)
    (define-key rjsx-mode-map (kbd "C-c RET") 'yo-js-find-missing-module)
    (define-key rjsx-mode-map (kbd "C-c C-c") 'yo-js-switch-to-view/container)
    (define-key rjsx-mode-map (kbd "C-c 2") 'yo-js-split-view/container-vertically)
@@ -213,17 +261,22 @@ If SKIP-COMMENTS is non-nil, comment nodes are ignored."
 ;; eshell
 (defun yo-eshell-get-prompt-regex ()
   "returns the a custom regexp that is used for the eshell prompt in conjunction of yo-eshell-prompt-function."
-  "^ →  ")
+  "^.* →  ")
 
 (defun yo-eshell-prompt-function ()
   "returns the prompt for the ehsell mode"
   (concat
    " "
+   (if (and default-directory (string-match-p "^/ssh:" default-directory))
+       (concat (cadr (split-string default-directory ":")) " ")
+     "")
    (propertize "→ " 'face '(:foreground "#eb0e69"))
    " "))
 
 (setq eshell-prompt-regexp (yo-eshell-get-prompt-regex))
 (setq eshell-prompt-function 'yo-eshell-prompt-function)
+
+(defvar *yo-eshell-hist-scroll-down* nil)
 
 (add-hook
  'eshell-mode-hook
@@ -232,7 +285,38 @@ If SKIP-COMMENTS is non-nil, comment nodes are ignored."
    (add-to-list 'eshell-visual-subcommands '("git" "diff" "log" "show"))
    (add-to-list 'eshell-visual-subcommands '("npm" "test" "start" "install"))
    ;; C-a is bound to eshell-bol, so this fixes the missing home key to act the same
-   (define-key eshell-mode-map [home] 'eshell-bol)))
+   (define-key eshell-mode-map [home] 'eshell-bol)
+   (defun eshell-next-matching-input-from-input (arg)
+     "Search forwards through input history for match for current input.
+\(Following history elements are more recent commands.)
+With prefix argument N, search for Nth following match.
+If N is negative, search backwards for the -Nth previous match."
+     (interactive "p")
+     (let ((*yo-eshell-hist-scroll-down* t))
+       (eshell-previous-matching-input-from-input (- arg))))
+
+   (defun eshell-previous-matching-input (regexp arg)
+     "Search backwards through input history for match for REGEXP.
+\(Previous history elements are earlier commands.)
+With prefix argument N, search for Nth previous match.
+If N is negative, find the next or Nth next match."
+     (interactive (eshell-regexp-arg "Previous input matching (regexp): "))
+     (setq arg (eshell-search-arg arg))
+     (if (> eshell-last-output-end (point))
+         (error "Point not located after prompt"))
+     (let ((pos (eshell-previous-matching-input-string-position regexp arg)))
+       ;; Has a match been found?
+       (if (null pos)
+	       (error "Not found")
+         (let ((item (- (ring-length eshell-history-ring) pos)))
+           (delete-region eshell-last-output-end (point))
+           (if (and (= item 1) *yo-eshell-hist-scroll-down*)
+               (message "End of history")
+             (setq eshell-history-index pos)
+             (unless (minibuffer-window-active-p (selected-window))
+	           (message "History item: %d" item))
+             ;; Can't use kill-region as it sets this-command
+             (insert-and-inherit (eshell-get-history pos)))))))))
 
 ;; c
 (add-hook
@@ -248,6 +332,9 @@ If SKIP-COMMENTS is non-nil, comment nodes are ignored."
  
 ;; java
 (add-hook 'java-mode-hook  'yo-c-set-offset-to-zero)
+
+;; conf-mode
+(add-to-list 'auto-mode-alist '("/\\.env$" . conf-mode))
 
 ;; paredit
 (defun yo-paredit-backspace ()

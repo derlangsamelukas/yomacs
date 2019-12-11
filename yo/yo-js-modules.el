@@ -80,6 +80,7 @@
                 'string-empty-p
                 (split-string
                  (shell-command-to-string (concat "find " (regexp-quote (yo-pathifism directory "src")) " -name '*.js' -type f")) "\n")))
+        (initial-buffer (current-buffer))
         (dict))
     (cl-labels ((add (name file &optional default)
                      (push `(,name (file ,file) (default ,default)) dict))
@@ -105,6 +106,7 @@
              (when quit-window
                (quit-window)))))
        files))
+    (switch-to-buffer initial-buffer)
     dict))
 
 (defun yo-js-load-node-modules-node-function ()
@@ -378,17 +380,9 @@
 
 (defun yo-json-new-object (prefix)
   (interactive "p")
-  (print prefix)
-  (if (equal prefix 1)
-      (progn
-        (insert "{}")
-        (backward-char))
-      (let ((start (point)))
-        (insert "{\n}")
-        (backward-char 2)
-        (insert "\n")
-        (indent-region start (+ 2 (point)))
-        (indent-for-tab-command))))
+  (yo-insert-scope "{" "}")
+  (unless (equal prefix 1)
+    (newline nil t)))
 
 (defun yo-json-new-array ()
   (interactive)
@@ -482,6 +476,22 @@
          (message (cadr (assoc 'type (cdr info)))))
        'ignore
        p-or-m))))
+
+(defun yo-js-return ()
+  (interactive)
+  (let ((face-at-point (face-at-point)))
+    (newline nil t)
+    (when (eq 'font-lock-doc-face face-at-point)
+      (insert "* ")
+      (indent-for-tab-command))))
+
+(defun yo-js-backspace ()
+  (interactive)
+  (if (and (eq 'font-lock-doc-face (face-at-point))
+           (looking-back "^[[:space:]]*\\*?[[:space:]]*"))
+      (delete-char (- (line-beginning-position) (point) 1))
+    (yo-backspace))
+  (indent-for-tab-command))
 
 (defun yo-js-project-hook ()
   (when (and (not (eq 'rjsx-mode major-mode)) (yo-js-files-project))
