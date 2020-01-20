@@ -1,0 +1,13 @@
+<?php
+
+namespace `(concat "App\\" (apply 'string (mapcar (lambda (x) (if (char-equal x ?\/) ?\\ x)) (string-trim (or (cadr (split-string (file-name-directory (or (buffer-file-name) "")) "/src")) "") "/" "/"))))`;
+
+/**
+ * Class `(file-name-base (or (buffer-file-name) ""))`
+ *
+ * @author Lukas Scharmer <lscharmer@databay.de>
+ */
+class `(file-name-base (or (buffer-file-name) ""))`
+{
+    $0
+}

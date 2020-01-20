@@ -35,7 +35,7 @@
      (cdr (assoc name defs)))))
 
 (defun yo-overlay-load-and-start (name)
-  (when (< (buffer-size) 10000)
+  (when (< (buffer-size) 100000)
     (yo-overlay-load name)
     (auto-overlay-start name)))
 

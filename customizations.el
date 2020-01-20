@@ -168,19 +168,48 @@ Indents the line at the end."
 (add-to-list 'auto-mode-alist '("\\.html5$" . web-mode))
 
 ;; php mode
+(require 'yo-php)
 (add-hook
  'php-mode-hook
  (lambda ()
    (define-key php-mode-map (kbd "DEL") 'yo-js-backspace)
-   (define-key php-mode-map (kbd "RET") 'yo-js-return)))
+   (define-key php-mode-map (kbd "RET") 'yo-js-return)
+   (define-key php-mode-map (kbd "C-c c") (lambda () (interactive) (if (auto-overlays-in (point-min) (point-max)) (auto-overlay-stop 'php) (auto-overlay-start 'php))))
+   (define-key php-mode-map (kbd "C-d") 'yo-duplicate-current-line)
+   (define-key php-mode-map (kbd "A-<up>") 'yo-swap-lines-up)
+   (define-key php-mode-map (kbd "C-d") 'yo-duplicate-current-line)
+   (define-key php-mode-map (kbd "C-x C-s") 'yo-php-lint)
+   (define-key php-mode-map (kbd "C-c <RET>") 'yo-add-namespace)))
 
 ;; js
 (require 'yo-js-modules)
+
+(fset 'yo-js-kbd-macro-function-to-value
+   (kmacro-lambda-form [?c ?o ?n ?s ?t ?  ?\C-\[ ?\[ ?1 ?\; ?5 ?C ?\C-\[ ?\[ ?1 ?\; ?5 ?C ?\C-\[ ?\[ ?1 ?\; ?6 ?D ?\C-w ?\C-? ?\C-\[ ?\[ ?1 ?\; ?5 ?D ?\C-y ?  ?= ? ] 0 "%d"))
+
 
 (add-hook
  'company-mode-hook
  (lambda ()
    (add-to-list 'company-backends 'yo-js-company-backend t)))
+
+;; @todo find a place for me
+(defun yo-js-jump-to-parameters ()
+  (interactive)
+  (beginning-of-defun-raw)
+  (search-forward "("))
+
+;; @todo remove me
+(defun yo-js2-helper ()
+  (when (and (eq major-mode 'js-mode) (buffer-file-name) (or (string-match-p "^/var/www/html/js/lzkh-pdf-gutachten/" (buffer-file-name))
+                                                             (string-match-p "^/var/www/html/js/standflaechen-frontend" (buffer-file-name))))
+    (define-key js2-mode-map (kbd "DEL") 'yo-js-backspace)
+    (define-key js2-mode-map (kbd "C-o") 'yo-json-new-object)
+    (define-key js2-mode-map (kbd "C-c a") 'yo-js-jump-to-parameters)
+      (js2-mode)
+    (js2-highlight-vars-mode)
+    (yo-overlay-load-and-start 'js)))
+(add-hook 'js-mode-hook 'yo-js2-helper)
 
 (add-hook
  'rjsx-mode-hook
@@ -372,8 +401,8 @@ If N is negative, find the next or Nth next match."
 (global-set-key (kbd "C-a")     'yo-smart-beginning-of-line)
 (global-set-key (kbd "C-c C-d") 'ace-jump-mode)
 (global-set-key (kbd "C-d")     'yo-duplicate-current-line)
-(global-set-key [(M up)]        'swap-lines-up)
-(global-set-key [(M down)]      'swap-lines-down)
+(global-set-key [(M up)]        'yo-swap-lines-up)
+(global-set-key [(M down)]      'yo-swap-lines-down)
 (global-set-key [(M left)]      'pop-tmp-bookmark)
 (global-set-key (kbd "M-#")     'add-tmp-bookmark-at-point)
 (global-set-key (kbd "C-s")     'isearch-forward)
