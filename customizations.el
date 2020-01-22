@@ -174,6 +174,8 @@ Indents the line at the end."
 (add-hook
  'php-mode-hook
  (lambda ()
+   (add-hook 'post-command-hook 'yo-php-const-to-dollar nil t)
+   ;; (remove-hook 'post-command-hook 'yo-php-const-to-dollar t)
    (define-key php-mode-map (kbd "DEL") 'yo-js-backspace)
    (define-key php-mode-map (kbd "RET") 'yo-js-return)
    (define-key php-mode-map (kbd "C-c c") (lambda () (interactive) (if (auto-overlays-in (point-min) (point-max)) (auto-overlay-stop 'php) (auto-overlay-start 'php))))
@@ -181,7 +183,8 @@ Indents the line at the end."
    (define-key php-mode-map (kbd "A-<up>") 'yo-swap-lines-up)
    (define-key php-mode-map (kbd "C-d") 'yo-duplicate-current-line)
    (define-key php-mode-map (kbd "C-x C-s") 'yo-php-lint)
-   (define-key php-mode-map (kbd "C-c <RET>") 'yo-add-namespace)))
+   (define-key php-mode-map (kbd "C-c <RET>") 'yo-add-namespace)
+   (define-key php-mode-map (kbd "C-c a") 'yo-php-goto-parameters-of-defun)))
 
 ;; js
 (require 'yo-js-modules)

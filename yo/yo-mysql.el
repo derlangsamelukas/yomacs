@@ -84,7 +84,7 @@
            (insert "\n"))
          result)
         (goto-char (point-min))))))
-(yo-mysql-show-databases)
+
 (defun yo-mysql-connect ()
   (interactive)
   (let ((user (read-from-minibuffer "User: "))
@@ -117,10 +117,12 @@
   (send-string *yo-mysql-process* (concat query ";\n"))
   (setf *yo-mysql--continue-with* cc))
 
-(send-string x "root\n")
-(send-string *yo-mysql-process* "show schemas;\n")
-(send-string *yo-mysql-process* "show tables from testdb;\n")
-(send-string *yo-mysql-process* "desc testdb.hui;\n")
-(send-string *yo-mysql-process* "exit\n")
+;; (send-string x "root\n")
+;; (send-string *yo-mysql-process* "show schemas;\n")
+;; (send-string *yo-mysql-process* "show tables from testdb;\n")
+;; (send-string *yo-mysql-process* "desc testdb.hui;\n")
+;; (send-string *yo-mysql-process* "exit\n")
 
-(length *yo-mysql-process-last-result*)
+;; (length *yo-mysql-process-last-result*)
+
+(provide 'yo-mysql)

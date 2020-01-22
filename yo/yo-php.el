@@ -1,4 +1,5 @@
 (defun yo-php-goto-parameters-of-defun (&optional point)
+  (interactive)
   (let ((start (or point (point))))
     (if (re-search-backward "function\\([[:space:]]+[[:word:]_]+\\)?[[:space:]]*(" nil t)
         (let ((match-length (length (match-string 0))))
@@ -118,6 +119,7 @@
      (save-excursion (1- (re-search-forward "[^[:word:]\\_]"))))))
 
 (defun yo-php-goto-src ()
+  (interactive)
   (let* ((parsed (yo-php-parse-files))
          (word (yo-php-get-namespace-at-point))
          (def (gethash word parsed)))
@@ -184,8 +186,8 @@
       (print arguments)
       (let ((start (point)))
         (insert "/**\n*\n")
-        (loop for pair in arguments
-              do (if (cdr pair) (insert "* @param " (car pair) " " (cadr pair) "\n") (insert "* @param mixed " (car pair) "\n")))
+        (cl-loop for pair in arguments
+                 do (if (cdr pair) (insert "* @param " (car pair) " " (cadr pair) "\n") (insert "* @param mixed " (car pair) "\n")))
         (insert "*/")
         (indent-region start end)))))
 
@@ -249,7 +251,11 @@
                    (message "namespace already present"))
           (message "added namespace"))))))
 
-
+(defun yo-php-const-to-dollar ()
+  (interactive)
+  (when (looking-back "[^[:word:]_]\\(const \\)")
+    (delete-region (match-beginning 1) (match-end 1))
+    (insert "$")))
 
 (provide 'yo-php)
 
