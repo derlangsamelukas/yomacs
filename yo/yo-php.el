@@ -1,4 +1,3 @@
-
 (defun yo-php-goto-parameters-of-defun (&optional point)
   (let ((start (or point (point))))
     (if (re-search-backward "function\\([[:space:]]+[[:word:]_]+\\)?[[:space:]]*(" nil t)
@@ -142,3 +141,115 @@
 
 ;; (add-hook 'post-command-hook 'yo-php-highlight-vars-post-command-hook nil t)
 ;; (remove-hook 'post-command-hook 'yo-php-highlight-vars-post-command-hook t)
+
+(defun yo-highlight-line (line)
+  (let ((inhibit-modification-hooks t))
+    (make-face 'temp-face2)
+    (set-face-underline 'temp-face2 "red")
+    (save-excursion
+      (goto-line line)
+      (put-text-property (line-beginning-position) (line-end-position) 'face 'temp-face2))))
+
+(defun yo-php-lint ()
+  (interactive "")
+  (save-buffer)
+  (let ((output (shell-command-to-string (concat "php -l " (buffer-file-name)))))
+    (unless (string-match-p "^No syntax errors detected in" output)
+      (let* ((first-line (car (split-string output "\n")))
+             (line (string-to-number (car (reverse (split-string first-line " "))))))
+        (yo-highlight-line line)
+        (message first-line)))))
+
+(defun yo-add-simple-doc-block ()
+  (beginning-of-thing 'word)
+  (delete-word 1)
+  (let ((start (point))
+        (point (progn (insert "/**\n* ") (point-marker))))
+    (insert "\n*/")
+    (indent-region start (point))
+    (goto-char point)))
+
+(defun yo-add-doc-block ()
+  (interactive "")
+  (save-excursion
+    (search-forward "(")
+    (backward-char 1)
+    (let* ((start (point))
+           (end (save-excursion (forward-sexp) (point)))
+           (arguments (mapcar (lambda (pair) (split-string pair " " t))
+                              (split-string (buffer-substring-no-properties (1+ start) (1- end)) "," t))))
+      (beginning-of-line)
+      (newline-and-indent)
+      (next-line -1)
+      (print arguments)
+      (let ((start (point)))
+        (insert "/**\n*\n")
+        (loop for pair in arguments
+              do (if (cdr pair) (insert "* @param " (car pair) " " (cadr pair) "\n") (insert "* @param mixed " (car pair) "\n")))
+        (insert "*/")
+        (indent-region start end)))))
+
+(defun yo-php-find-docroot ()
+  (shell-command-to-string "/home/lscharmer/Programming/bash/find-docroot.sh"))
+
+(defun yo-insert-namespace (classname)
+  (interactive "sClassname: ")
+  (let* ((command (concat
+                   "find "
+                   (shell-quote-argument (string-trim (yo-php-find-docroot)))
+                   " -name "
+                   (shell-quote-argument (string-trim (concat classname ".php")))))
+         (_ (print command))
+         (result (string-trim
+                  (shell-command-to-string command)))
+         (grep-results (cl-reduce (lambda (matches result)
+                                 (let ((grep-result (or (shell-command-to-string (concat "grep namespace " (shell-quote-argument result))) "")))
+                                   (if (string-match "namespace \\(.+\\);" grep-result)
+                                       (cons (match-string 1 grep-result) matches)
+                                     matches)))
+                               (split-string result "\n")
+                               :initial-value nil)))
+    (if grep-results
+        (progn  (insert "\\" (if (cdr grep-results) (completing-read "Select namespace: " grep-results nil t) (car grep-results)) "\\" classname) t)
+      (progn (message "no namespace found for class: '%s'" classname) nil))))
+
+(defun yo-correct-namespace ()
+  (interactive "")
+  (let* ((start (save-excursion (beginning-of-thing 'word) (point)))
+         (end (save-excursion (end-of-thing 'word) (point)))
+         (classname (buffer-substring-no-properties start end)))
+    (delete-region start end)
+    (unless (yo-insert-namespace classname)
+      (insert classname))))
+
+(defun yo-add-namespace ()
+  (interactive "")
+  (save-excursion
+    (let ((word (word-at-point)))
+      (goto-char (point-min))
+      (re-search-forward "^class ")
+      (unless (re-search-backward "^use " nil t)
+        (re-search-backward "^namespace ")
+        (end-of-line)
+        (insert "\n"))
+      (next-line)
+      (beginning-of-line)
+      (insert "use " word ";\n")
+      (backward-char 2)
+      (yo-correct-namespace)
+      (beginning-of-line)
+      (forward-char 4)
+      (delete-char 1)
+      (let ((line (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
+            (line-pos (line-number-at-pos)))
+        (if (search-backward line nil t)
+            (progn (goto-line line-pos)
+                   (beginning-of-line)
+                   (delete-char (1+ (length line)))
+                   (message "namespace already present"))
+          (message "added namespace"))))))
+
+
+
+(provide 'yo-php)
+

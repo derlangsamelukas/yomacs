@@ -80,7 +80,7 @@
      (340 . "#e7c547")
      (360 . "DarkOliveGreen3")))
  '(vc-annotate-very-old-color nil)
- '(yaml-indent-offset 4))
+ '(yaml-indent-offset 2))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
