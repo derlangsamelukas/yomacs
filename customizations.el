@@ -36,6 +36,7 @@
  line-spacing 4)
 
 ;; miscellaneous functions for key bindings (not related to one specific mode)
+(require 'yo-search)
 (require 'yo-delete);; miscellaneous functions to delete things
 (require 'yo-swap);; functions to wap lines
 (require 'yo-tmp-bookmark)
@@ -106,6 +107,7 @@ Indents the line at the end."
 (add-hook
  'merlin-mode-hook
  (lambda ()
+   (define-key merlin-mode-map (kbd "DEL") 'yo-backspace)
    (define-key
      merlin-mode-map
      (kbd "RET")
