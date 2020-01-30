@@ -41,6 +41,7 @@
 
 (defvar *yo-overlay-hooks*
   `((lisp-mode-hook ,(lambda () (yo-overlay-load-and-start 'lisp)))
+    (scheme-mode-hook ,(lambda () (yo-overlay-load-and-start 'lisp)))
     (emacs-lisp-mode-hook ,(lambda () (yo-overlay-load-and-start 'lisp)))
     (rjsx-mode-hook ,(lambda () (yo-overlay-load-and-start 'js)))
     (php-mode-hook ,(lambda () (yo-overlay-load-and-start 'php)))))
