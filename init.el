@@ -110,3 +110,4 @@
  (lambda ()
    (load (concat user-emacs-directory "after-init"))))
 (put 'dired-find-alternate-file 'disabled nil)
+(put 'downcase-region 'disabled nil)

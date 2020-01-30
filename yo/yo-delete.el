@@ -22,11 +22,14 @@ This command does not push text to `kill-ring'."
   "Delete text from current position to end of line char.
 This command does not push text to `kill-ring'."
   (interactive)
-  (beginning-of-line)
-  (delete-region
-   (point)
-   (progn (end-of-line 1) (point)))
-  (backward-char)
-  (delete-char 1))
+  (if (region-active-p)
+      (delete-region (region-beginning) (region-end))
+    (progn
+      (beginning-of-line)
+      (delete-region
+       (point)
+       (progn (end-of-line 1) (point)))
+      (backward-char)
+      (delete-char 1))))
 
 (provide 'yo-delete)

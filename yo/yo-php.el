@@ -14,6 +14,7 @@
   (forward-sexp))
 
 (defun yo-php-end-of-defun ()
+  (interactive "")
   (yo-php-goto-parameters-of-defun)
   (yo-php--end-of-defun))
 
@@ -253,9 +254,49 @@
 
 (defun yo-php-const-to-dollar ()
   (interactive)
-  (when (looking-back "[^[:word:]_]\\(const \\)")
+  (cond
+   ((and (looking-back "[^[:word:]_]\\(const \\)") (not (eq (face-at-point) 'php-string)))
     (delete-region (match-beginning 1) (match-end 1))
-    (insert "$")))
+    (insert "$"))
+   ((and (looking-back "[^[:word:]_]\\(\\(public\\)\\|\\(protected\\)\\|\\(private\\)\\) ")
+         (not (looking-at "[[:space:]]*function"))
+         (save-excursion
+           (yo-php-goto-parameters-of-defun)
+           (= (point-min) (point)))
+         (not (eq (face-at-point) 'php-string)))
+    (insert "function ")
+    (indent-region
+     (point)
+     (save-excursion
+       (insert "()\n{\n\n}")
+       (point))))))
+
+(defun yo-select-region (start end)
+  (push-mark start)
+  (goto-char end)
+  (setq mark-active t))
+
+(defun yo-php-grab-function ()
+  (interactive)
+  (yo-select-region
+   (save-excursion
+     (yo-php-end-of-defun)
+     (point))
+   (save-excursion
+     (yo-php-goto-parameters-of-defun)
+     (when (= (point-min) (point))
+       (error "you are not in a function"))
+     (search-backward "function")
+     (if (looking-back "[^[:word:]_]\\(\\(public\\)\\|\\(protected\\)\\|\\(private\\)\\) ")
+       (progn
+         (backward-word)
+         (let ((point (point)))
+           (if (and (re-search-backward "*/[[:space:]]*" nil t)
+                    (string-match-p "^[[:space:]]*$" (cl-remove-if (lambda (char) (char-equal 10 char)) (buffer-substring-no-properties (match-end 0) point)))
+                    (search-backward "/**" nil t))
+               (point)
+             point)))
+       (point)))))
 
 (provide 'yo-php)
 

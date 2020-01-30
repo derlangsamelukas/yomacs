@@ -184,7 +184,9 @@ Indents the line at the end."
    (define-key php-mode-map (kbd "C-d") 'yo-duplicate-current-line)
    (define-key php-mode-map (kbd "C-x C-s") 'yo-php-lint)
    (define-key php-mode-map (kbd "C-c <RET>") 'yo-add-namespace)
-   (define-key php-mode-map (kbd "C-c a") 'yo-php-goto-parameters-of-defun)))
+   (define-key php-mode-map (kbd "C-c a") 'yo-php-goto-parameters-of-defun)
+   (define-key php-mode-map (kbd "C-c f") 'yo-php-grab-function)
+   (define-key php-mode-map (kbd "C-c s") 'swiper-all)))
 
 ;; js
 (require 'yo-js-modules)
@@ -320,6 +322,7 @@ If SKIP-COMMENTS is non-nil, comment nodes are ignored."
    (add-to-list 'eshell-visual-subcommands '("npm" "test" "start" "install"))
    ;; C-a is bound to eshell-bol, so this fixes the missing home key to act the same
    (define-key eshell-mode-map [home] 'eshell-bol)
+   (setq yo-mode-line-updated 'eshell/pwd)
    (defun eshell-next-matching-input-from-input (arg)
      "Search forwards through input history for match for current input.
 \(Following history elements are more recent commands.)
