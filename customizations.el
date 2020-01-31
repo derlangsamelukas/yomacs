@@ -186,7 +186,9 @@ Indents the line at the end."
    (define-key php-mode-map (kbd "C-c <RET>") 'yo-add-namespace)
    (define-key php-mode-map (kbd "C-c a") 'yo-php-goto-parameters-of-defun)
    (define-key php-mode-map (kbd "C-c f") 'yo-php-grab-function)
-   (define-key php-mode-map (kbd "C-c s") 'swiper-all)))
+   (define-key php-mode-map (kbd "C-c s") 'swiper-all)
+   (define-key php-mode-map (kbd "M-n") 'yo-php-ast-goto-next-var)
+   (define-key php-mode-map (kbd "M-p") 'yo-php-ast-goto-prev-var)))
 
 ;; js
 (require 'yo-js-modules)

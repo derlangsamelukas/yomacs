@@ -157,11 +157,13 @@
   (interactive "")
   (save-buffer)
   (let ((output (shell-command-to-string (concat "php -l " (buffer-file-name)))))
-    (unless (string-match-p "^No syntax errors detected in" output)
+    (if (string-match-p "^No syntax errors detected in" output)
+        t
       (let* ((first-line (car (split-string output "\n")))
              (line (string-to-number (car (reverse (split-string first-line " "))))))
         (yo-highlight-line line)
-        (message first-line)))))
+        (message first-line))
+      nil)))
 
 (defun yo-add-simple-doc-block ()
   (beginning-of-thing 'word)
