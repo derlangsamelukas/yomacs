@@ -1,12 +1,14 @@
 ;; -*- lexical-binding: t -*-
 
+(require 'xml)
+
 (defun yo-php-ast-clip-dom (php-buffer dom)
   (let ((walk
          (lambda (walk)
            (lambda (node)
              (let ((start (1+ (string-to-number (dom-attr node 'start)))) ; 1+ because buffer index starts at 1 not at 0
                    (end (+ 2 (string-to-number (dom-attr node 'end)))))
-               (put-text-property start end 'yo-php-node (cons node (get-text-property start 'yo-php-node)))
+               (put-text-property start (min end (point-max)) 'yo-php-node (cons node (get-text-property start 'yo-php-node)))
                (mapc (funcall walk walk) (dom-children node)))))))
     (with-current-buffer php-buffer
       (put-text-property (point-min) (point-max) 'yo-php-node nil)
@@ -18,8 +20,8 @@
     (current-buffer)))
 
 (defun yo-php-parse ()
-  (unless (yo-php-lint)
-    (error "file contains sytax errors"))
+  ;; (unless (yo-php-lint)
+  ;;   (error "file contains sytax errors"))
   (let ((php-buffer (current-buffer))
         (content (buffer-substring-no-properties (point-min) (point-max)))
         (buffer (yo-create-or-clear-buffer "*yo php output buffer*")))
@@ -39,8 +41,10 @@
        (lambda (process message)
          (kill-buffer (process-buffer process))
          (let ((dom (with-current-buffer buffer
+                      (setq x (buffer-substring-no-properties (point-min) (point-max)))
                       (libxml-parse-xml-region (point-min) (point-max)))))
            (kill-buffer buffer)
+           ;; (setq x dom)
            (yo-php-ast-clip-dom php-buffer dom))))
       (send-string process (concat content))
       (process-send-eof process))))
@@ -55,7 +59,7 @@
     (unless (eq 'Expr_Variable (dom-tag (car ast)))
       (error "not in a php variable"))
     (let ((name (dom-attr (car ast) 'name))
-          (parent-scope (assoc 'Stmt_Function ast)))
+          (parent-scope (or (assoc 'Stmt_Function ast) (assoc 'Stmt_ClassMethod ast))))
       (unless parent-scope
         (error "there is no outer function"))
       (funcall
@@ -63,7 +67,7 @@
        (car ast)
        (cl-remove-if-not
         (lambda (node) (eq 'Expr_Variable (dom-tag node)))
-        (dom-elements parent-scope 'name name))))))
+        (dom-elements parent-scope 'name (concat "^" name "$")))))))
 
 (defun yo-php-ast-goto-prev-var ()
   (interactive "")

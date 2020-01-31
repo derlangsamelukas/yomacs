@@ -261,7 +261,7 @@
     (delete-region (match-beginning 1) (match-end 1))
     (insert "$"))
    ((and (looking-back "[^[:word:]_]\\(\\(public\\)\\|\\(protected\\)\\|\\(private\\)\\) ")
-         (not (looking-at "[[:space:]]*function"))
+         (looking-at "[[:space:]]*$")
          (save-excursion
            (yo-php-goto-parameters-of-defun)
            (= (point-min) (point)))
@@ -299,6 +299,31 @@
                (point)
              point)))
        (point)))))
+
+(defun yo-php-show-functions-type ()
+  (interactive "")
+  (message
+   "%s"
+   (or (car (split-string
+             (shell-command-to-string
+              (concat "echo ':t' "
+                      (shell-quote-argument (current-word))
+                      " | php /home/lscharmer/Programming/html/repl.php"))
+             "\n"
+             t
+             " "))
+       "hm...")))
+
+(defun yo-php-eval-buffer ()
+  (interactive)
+  (let ((process (start-process
+                  "php process"
+                  "*php process*"
+                  "/usr/bin/php")))
+    (set-process-filter process (lambda (process string) (message "%s" string)))
+    (set-process-sentinel process (lambda (process message) (kill-buffer (process-buffer process))))
+    (send-string process (buffer-string))
+    (process-send-eof process)))
 
 (provide 'yo-php)
 
