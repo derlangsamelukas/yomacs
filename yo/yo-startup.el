@@ -9,7 +9,11 @@
     ("Chicken"
      (lambda (dir)
        (find-file dir)
-       (geiser 'chicken)))))
+       (geiser 'chicken)))
+    ("PHP"
+     (lambda (dir)
+       (yo-php-project-init dir)
+       (find-file dir)))))
 
 (defun yo-insert-button (label callback)
   "@todo look at button package, how to use them correctly"
