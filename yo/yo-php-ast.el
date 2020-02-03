@@ -98,7 +98,8 @@
                (libxml-parse-xml-region
                 (point-min)
                 (point-max)))
-            (message "Error: %s" (buffer-string))))))))
+            (message "Error: %s" (buffer-string))))
+        nil))))
 
 (defun yo-php-ast-at-point (&optional point)
   (get-text-property (or point (point)) 'yo-php-node))

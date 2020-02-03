@@ -4,11 +4,12 @@
 (defvar *yo-php-parse-error* nil) ; nil | t
 
 (defun yo-php-parse-filter (process string)
+  ;; (with-current-buffer "*aaaa*" (goto-char (point-max)) (insert "input arrived:\n" string "\n------------\n"))
   (if (not *yo-php-parse-process-read*)
-      (let* ((x (print string))
-             (index-of-newline (cl-position 10 string)) ; it is expected that there is always a newline
+      (let* ((index-of-newline (cl-position 10 string)) ; it is expected that there is always a newline
              (first-line (substring string 0 index-of-newline)))
         (setf *yo-php-parse-process-read* (string-to-number first-line))
+        ;; (message "READING: %d" *yo-php-parse-process-read*)
         (setf *yo-php-parse-error* (not (string-match-p " ok$" first-line)))
         (with-current-buffer (process-buffer process)
           (setf (buffer-string) "")
@@ -17,17 +18,19 @@
     (with-current-buffer (process-buffer process)
       (goto-char (point-max))
       (insert string)
-      (if (>= (1- (point-max)) *yo-php-parse-process-read*)
-          (progn
-            (print "funcalled")
-            (print *yo-php-parse-finished*)
-            (funcall (pop *yo-php-parse-finished*)
-                     (current-buffer)
-                     (not *yo-php-parse-error*))
+      (setf *yo-php-parse-process-read*
+            (- *yo-php-parse-process-read*
+               (length string)))
+      (when (<= *yo-php-parse-process-read* 0)
+        (progn
+          (let ((after-cleanup (or (funcall (pop *yo-php-parse-finished*)
+                                            (current-buffer)
+                                            (not *yo-php-parse-error*))
+                                   'ignore)))
             (setf *yo-php-parse-error* nil)
             (setf *yo-php-parse-process-read* nil)
-            (setf (buffer-string) ""))
-        (cl-decf *yo-php-parse-process-read* (1- (point-max)))))))
+            (setf (buffer-string) "")
+            (funcall after-cleanup)))))))
 
 (defun yo-php-start-parse-process ()
   (let ((process
@@ -40,11 +43,19 @@
     (setf *yo-php-parse-process* process)))
 
 (defun yo-php-parse-something (string cc)
-  (when (string-empty-p string)
-    (error "string is empty"))
-  (setf *yo-php-parse-finished* (append *yo-php-parse-finished* (list cc)))
-  (process-send-string *yo-php-parse-process* (format "%d\n%s" (length string) string))
-  (process-send-eof *yo-php-parse-process*))
+  (let ((string (substring-no-properties string)))
+    (when (string-empty-p string)
+      (error "string is empty"))
+    (let ((string (if (char-equal 10 (aref string (1- (length string))))
+                      string
+                    (concat string "\n"))))
+      (setf *yo-php-parse-finished* (append *yo-php-parse-finished* (list cc)))
+      (process-send-string *yo-php-parse-process* (format "%d\n" (string-bytes string)))
+      (process-send-string *yo-php-parse-process* string)
+      ;; (message "SEND: %d (%s)" (length string) *yo-php-parse-process-read*)
+      )
+    ;; (process-send-eof *yo-php-parse-process*)
+    ))
 
 ;; (yo-php-start-parse-process)
 ;; (yo-php-parse-something "<?php echo 'hello';"

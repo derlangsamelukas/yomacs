@@ -2,20 +2,36 @@
 
 (setq yo-php-todo-list nil)
 
+;; (defun yo-php-todo-list-worker (&rest ignored)
+;;   (when yo-php-todo-list
+;;     (let ((file (pop yo-php-todo-list))
+;;           (buffer (generate-new-buffer "*yo php temp buffer*")))
+;;       (with-current-buffer buffer
+;;         (insert-file file)
+;;         (yo-php-ast--parse
+;;          (lambda (error)
+;;            (kill-buffer buffer)
+;;            (message "error in file: %s" file))
+;;          (lambda (dom)
+;;            (print "aaaaaa")
+;;            (kill-buffer buffer)
+;;            (yo-php-todo-list-worker)))))))
+
 (defun yo-php-todo-list-worker (&rest ignored)
   (when yo-php-todo-list
-    (let ((file (pop yo-php-todo-list))
-          (buffer (generate-new-buffer "*yo php temp buffer*")))
-      (with-current-buffer buffer
-        (insert-file file)
-        (yo-php-ast--parse
-         (lambda (error)
-           (kill-buffer buffer)
-           (message "error in file: %s" file))
-         (lambda (dom)
-           (print "aaaaaa")
-           (kill-buffer buffer)
-           (yo-php-todo-list-worker)))))))
+    (let ((file (pop yo-php-todo-list)))
+      ;; (message "::%s" file)
+      (yo-php-parse-something
+       (with-temp-buffer
+         (insert-file file)
+         (buffer-string))
+       (lambda (buffer success)
+         (if success
+             (progn
+               ;; (message "parsed file successfully: %s" file)
+               'yo-php-todo-list-worker)
+           (message "error parsing file `%s'" file)
+           nil))))))
 
 (defun yo-php-create-index (dir)
   (setf
@@ -29,6 +45,7 @@
             (not (string-match-p "^\\." (car file)))))
      (directory-files-and-attributes dir))
     :initial-value nil))
+  (setf x (length yo-php-todo-list))
   (yo-php-todo-list-worker))
 
 (defun yo-php-project-init (dir)
