@@ -422,6 +422,7 @@ If N is negative, find the next or Nth next match."
 (global-set-key (kbd "C-s")     'isearch-forward)
 (global-set-key (kbd "C-c -") 'comment-or-uncomment-region)
 (global-set-key (kbd "C-y") 'yo-yank)
+(global-set-key (kbd "M-y") 'helm-show-kill-ring)
 
 (global-unset-key (kbd "<insert>"))
 (global-unset-key (kbd "<insertchar>"))
