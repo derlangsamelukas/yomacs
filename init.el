@@ -100,6 +100,7 @@
  '(custom-button-unraised ((t (:background "#241f22" :foreground "color-105"))))
  '(custom-group-tag ((t (:inherit variable-pitch :foreground "color-105" :weight bold :height 1.2))))
  '(custom-variable-tag ((t (:foreground "color-105" :weight bold))))
+ '(dired-header ((t (:inherit nil :foreground "color-105" :weight bold))))
  '(font-lock-comment-face ((t (:foreground "#8B8989" :slant normal))))
  '(font-lock-type-face ((t (:foreground "color-226"))))
  '(font-lock-variable-name-face ((t (:foreground "color-41"))))
