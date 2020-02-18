@@ -33,4 +33,14 @@
   ;; (rgrep needle "*" "." nil)
   )
 
+(defun yo-re-find-file (regexp)
+  (interactive "sEnter Regex: ")
+  (let ((result (directory-files-recursively default-directory regexp t)))
+    (cond
+     ((cdr result)
+      (find-file (completing-read "Select file: " result)))
+     ((car result)
+      (find-file (car result)))
+     (t (message "no files found...")))))
+
 (provide 'yo-search)

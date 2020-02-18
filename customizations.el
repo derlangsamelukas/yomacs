@@ -214,6 +214,7 @@ Indents the line at the end."
 (defun yo-js2-helper ()
   (when (and (eq major-mode 'js-mode) (buffer-file-name) (or (string-match-p "^/var/www/html/js/lzkh-pdf-gutachten/" (buffer-file-name))
                                                              (string-match-p "^/var/www/html/js/standflaechen-frontend" (buffer-file-name))))
+    (define-key js-mode-map (kbd "C-c j") 'yo-js-is-js2-etc)
     (define-key js2-mode-map (kbd "DEL") 'yo-js-backspace)
     (define-key js2-mode-map (kbd "C-o") 'yo-json-new-object)
     (define-key js2-mode-map (kbd "C-c a") 'yo-js-jump-to-parameters)
@@ -296,6 +297,7 @@ If SKIP-COMMENTS is non-nil, comment nodes are ignored."
 (add-hook
  'dired-mode-hook
  (lambda ()
+   (define-key dired-mode-map (kbd "C-c C-f") 'yo-re-find-file)
    (dired-hide-details-mode 1)))
 
 ;; eshell

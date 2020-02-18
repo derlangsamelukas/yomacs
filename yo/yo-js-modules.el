@@ -497,4 +497,10 @@
   (when (and (not (eq 'rjsx-mode major-mode)) (yo-js-files-project))
     (rjsx-mode)))
 
+(defun yo-js-is-js2-etc ()
+  (interactive)
+  (js2-mode)
+  (js2-highlight-vars-mode)
+  (yo-overlay-load-and-start 'js))
+
 (provide 'yo-js-modules)
