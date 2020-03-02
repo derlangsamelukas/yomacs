@@ -174,6 +174,8 @@ Indents the line at the end."
 (add-hook
  'php-mode-hook
  (lambda ()
+   (when (string-match-p "^/var/www/html/(my-)?doll" (or (buffer-file-name) ""))
+     (setq indent-tabs-mode t))
    (add-hook 'post-command-hook 'yo-php-const-to-dollar nil t)
    ;; (remove-hook 'post-command-hook 'yo-php-const-to-dollar t)
    (define-key php-mode-map (kbd "DEL") 'yo-js-backspace)
@@ -212,9 +214,13 @@ Indents the line at the end."
 
 ;; @todo remove me
 (defun yo-js2-helper ()
+  (require 'yo-js-modules)
+  (define-key js-mode-map (kbd "C-c j") 'yo-js-is-js2-etc)
+  (define-key js-mode-map (kbd "C-o") 'yo-json-new-object)
+  (define-key js-mode-map (kbd "DEL") 'yo-js-backspace)
+  (define-key js-mode-map (kbd "RET") 'yo-js-return)
   (when (and (eq major-mode 'js-mode) (buffer-file-name) (or (string-match-p "^/var/www/html/js/lzkh-pdf-gutachten/" (buffer-file-name))
                                                              (string-match-p "^/var/www/html/js/standflaechen-frontend" (buffer-file-name))))
-    (define-key js-mode-map (kbd "C-c j") 'yo-js-is-js2-etc)
     (define-key js2-mode-map (kbd "DEL") 'yo-js-backspace)
     (define-key js2-mode-map (kbd "C-o") 'yo-json-new-object)
     (define-key js2-mode-map (kbd "C-c a") 'yo-js-jump-to-parameters)
@@ -298,6 +304,7 @@ If SKIP-COMMENTS is non-nil, comment nodes are ignored."
  'dired-mode-hook
  (lambda ()
    (define-key dired-mode-map (kbd "C-c C-f") 'yo-re-find-file)
+   (define-key dired-mode-map (kbd "C-c C-c") 'dired-hide-details-mode)
    (dired-hide-details-mode 1)))
 
 ;; eshell
