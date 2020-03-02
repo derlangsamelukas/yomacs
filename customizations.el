@@ -305,7 +305,8 @@ If SKIP-COMMENTS is non-nil, comment nodes are ignored."
  (lambda ()
    (define-key dired-mode-map (kbd "C-c C-f") 'yo-re-find-file)
    (define-key dired-mode-map (kbd "C-c C-c") 'dired-hide-details-mode)
-   (dired-hide-details-mode 1)))
+   ;; (dired-hide-details-mode 1)
+   ))
 
 ;; eshell
 (defun yo-eshell-get-prompt-regex ()
@@ -330,13 +331,13 @@ If SKIP-COMMENTS is non-nil, comment nodes are ignored."
 (add-hook
  'eshell-mode-hook
  (lambda ()
-   ;; (company-mode -1)
-   (set (make-local-variable 'company-minimum-prefix-length) 10000)
+   (company-mode -1)
+   ;; (set (make-local-variable 'company-minimum-prefix-length) 10000)
    (add-to-list 'eshell-visual-subcommands '("git" "diff" "log" "show"))
    (add-to-list 'eshell-visual-subcommands '("npm" "test" "start" "install"))
    ;; C-a is bound to eshell-bol, so this fixes the missing home key to act the same
    (define-key eshell-mode-map [home] 'eshell-bol)
-   (define-key eshell-mode-map (kbd "TAB") 'company-complete)
+   ;; (define-key eshell-mode-map (kbd "TAB") 'company-complete)
    (setq yo-mode-line-updated 'eshell/pwd)
    (defun eshell-next-matching-input-from-input (arg)
      "Search forwards through input history for match for current input.
