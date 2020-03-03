@@ -409,6 +409,12 @@ If N is negative, find the next or Nth next match."
    (lambda ()
      (define-key paredit-mode-map (kbd "DEL") 'yo-paredit-backspace))))
 
+;; emacs lisp
+(add-hook
+ 'emacs-lisp-mode-hook
+ (lambda ()
+   (define-key emacs-lisp-mode-map (kbd "C-c C-b") 'eval-buffer)))
+
 ;; yo overlay
 (when (package-installed-p 'auto-overlays)
   (require 'yo-overlay)

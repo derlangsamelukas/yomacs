@@ -32,28 +32,36 @@
             (setf (buffer-string) "")
             (funcall after-cleanup)))))))
 
+(defun yo-php-parse-error-arrived (&rest ignored)
+  (error "stderr got filled"))
+
 (defun yo-php-start-parse-process ()
-  (let ((process
-         (start-process
-          "yo php process"
-          "*yo php process*"
-          "/usr/bin/php"
-          (concat "/home/" (user-login-name) "/Programming/html/php-ast/run.php"))))
+  (let* ((error-buffer (generate-new-buffer "*yo php process stderr*"))
+         (process
+          (make-process
+           :name "yo php process"
+           :buffer "*yo php process*"
+           :command (list "/usr/bin/php" (concat "/home/" (user-login-name) "/Programming/html/php-ast/run.php"))
+           :stderr error-buffer)))
+    (buffer-disable-undo (process-buffer process))
+    ;; (with-current-buffer error-buffer
+    ;;   (add-hook 'after-change-functions 'yo-php-parse-error-arrived nil t))
     (set-process-filter process 'yo-php-parse-filter)
     (setf *yo-php-parse-process* process)))
 
 (defun yo-php-parse-something (string cc)
-  (let ((string (substring-no-properties string)))
+  (let ((string string;; (string-trim (substring-no-properties string))
+         ))
     (when (string-empty-p string)
       (error "string is empty"))
-    (let ((string (if (char-equal 10 (aref string (1- (length string))))
-                      string
-                    (concat string "\n"))))
-      (setf *yo-php-parse-finished* (append *yo-php-parse-finished* (list cc)))
-      (process-send-string *yo-php-parse-process* (format "%d\n" (string-bytes string)))
-      (process-send-string *yo-php-parse-process* string)
-      ;; (message "SEND: %d (%s)" (length string) *yo-php-parse-process-read*)
-      )
+    (setf *yo-php-parse-finished* (append *yo-php-parse-finished* (list cc)))
+    (send-string *yo-php-parse-process* (format "%d\n" (string-bytes (buffer-string))))
+    (send-string *yo-php-parse-process* (buffer-string))
+    ;; (process-send-string *yo-php-parse-process* (format "%d\n" (string-bytes string)))
+    ;; (process-send-string *yo-php-parse-process* string)
+    ;; (process-send-eof *yo-php-parse-process*)
+    ;; (message "SEND: %d (%s)" (length string) *yo-php-parse-process-read*)
+    
     ;; (process-send-eof *yo-php-parse-process*)
     ))
 
