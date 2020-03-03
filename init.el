@@ -115,6 +115,8 @@
  '(minibuffer-prompt ((t (:background "undefined-bg" :foreground "color-105"))))
  '(mode-line ((t (:background "color-235" :foreground "#4c83ff" :box nil))))
  '(mode-line-inactive ((t (:background "#1a161f" :foreground "#4D4D4D" :box nil))))
+ '(org-level-2 ((t (:foreground "color-201" :height 1.2))))
+ '(org-todo ((t (:foreground "color-203" :box (:line-width 1 :style none) :weight bold))))
  '(tuareg-font-lock-constructor-face ((t (:inherit default :foreground "color-154"))))
  '(tuareg-font-lock-module-face ((t (:inherit font-lock-type-face :foreground "color-165"))))
  '(tuareg-font-lock-operator-face ((t (:foreground "brightmagenta"))))

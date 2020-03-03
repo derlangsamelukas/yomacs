@@ -101,6 +101,11 @@ Indents the line at the end."
   (save-excursion
     (insert end)))
 
+(defun yo-edit-main-org ()
+  "edits the main.org file to have a single org file where everything is organized and one does not have to search for the main.org (or bother where to put the file)"
+  (interactive)
+  (find-file (yo-pathifism user-emacs-directory "main.org")))
+
 ;; ocaml
 (autoload 'merlin-mode "merlin" nil t nil)
 (add-hook 'tuareg-mode-hook 'merlin-mode t)
@@ -415,6 +420,13 @@ If N is negative, find the next or Nth next match."
  (lambda ()
    (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-alt-done)))
 
+;; calendar
+(add-hook
+ 'calendar-mode-hook
+ (lambda ()
+   (define-key calendar-mode-map (kbd "C-<right>") 'calendar-forward-month)
+   (define-key calendar-mode-map (kbd "C-<left>") 'calendar-backward-month)))
+
 ;; global key bindings
 (global-set-key (kbd "<f6>")    'iedit-mode)
 (global-set-key (kbd "C-h")     'yo-delete-word-backward)
@@ -433,6 +445,7 @@ If N is negative, find the next or Nth next match."
 (global-set-key (kbd "C-c -") 'comment-or-uncomment-region)
 (global-set-key (kbd "C-y") 'yo-yank)
 (global-set-key (kbd "M-y") 'helm-show-kill-ring)
+(global-set-key (kbd "C-x t") 'yo-edit-main-org)
 
 (global-unset-key (kbd "<insert>"))
 (global-unset-key (kbd "<insertchar>"))
