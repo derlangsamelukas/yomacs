@@ -13,4 +13,9 @@
          default-directory))))
    (buffer-list)))
 
+(defun yo-buffer-list-mark-deleted-by-regexp (regexp)
+  (interactive "sEnter Regexp: ")
+  (while (re-search-forward regexp nil t)
+    (tabulated-list-set-col 0 (char-to-string Buffer-menu-del-char) t)))
+
 (provide 'yo-buffer)
