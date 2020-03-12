@@ -243,7 +243,8 @@ Indents the line at the end."
    (define-key rjsx-mode-map (kbd "C-c RET") 'yo-js-find-missing-module)
    (define-key rjsx-mode-map (kbd "C-c C-c") 'yo-js-switch-to-view/container)
    (define-key rjsx-mode-map (kbd "C-c 2") 'yo-js-split-view/container-vertically)
-   (define-key rjsx-mode-map (kbd "C-c 3") 'yo-js-split-view/container-horizontally)))
+   (define-key rjsx-mode-map (kbd "C-c 3") 'yo-js-split-view/container-horizontally)
+   (define-key rjsx-mode-map (kbd "C-c d") 'yo-js-switch-to-component/doc)))
 
 (add-hook 'js-mode-hook 'yo-js-project-hook)
 
@@ -297,6 +298,15 @@ If SKIP-COMMENTS is non-nil, comment nodes are ignored."
            (setq result nil))
        (or result js2-mode-ast))))))
 
+;; markdown
+(add-hook
+ 'markdown-mode-hook
+ (lambda ()
+   "this is used for react projects where the doc is under the src folder"
+   (require 'yo-js-markdown)
+   (define-key markdown-mode-map (kbd "C-c d") 'yo-js-switch-to-component/doc)
+   (define-key markdown-mode-map (kbd "C-c e") 'yo-js-markdown-edit-component)))
+
 ;; org
 (add-hook
  'org-mode-hook
@@ -340,6 +350,7 @@ If SKIP-COMMENTS is non-nil, comment nodes are ignored."
    ;; (set (make-local-variable 'company-minimum-prefix-length) 10000)
    (add-to-list 'eshell-visual-subcommands '("git" "diff" "log" "show"))
    (add-to-list 'eshell-visual-subcommands '("npm" "test" "start" "install"))
+   (add-to-list 'eshell-visual-subcommands '("yarn" "styleguidist" "start" "install"))
    ;; C-a is bound to eshell-bol, so this fixes the missing home key to act the same
    (define-key eshell-mode-map [home] 'eshell-bol)
    ;; (define-key eshell-mode-map (kbd "TAB") 'company-complete)
@@ -452,6 +463,7 @@ If N is negative, find the next or Nth next match."
 (global-set-key (kbd "C-y") 'yo-yank)
 (global-set-key (kbd "M-y") 'helm-show-kill-ring)
 (global-set-key (kbd "C-x t") 'yo-edit-main-org)
+(global-set-key (kbd "<f12>")    'find-grep-dired)
 
 (global-unset-key (kbd "<insert>"))
 (global-unset-key (kbd "<insertchar>"))

@@ -237,23 +237,31 @@
   (interactive "sName of Component: \nsFolder: ")
   (yo-js-new-component* "views" folder name))
 
-(defun yo-js-switch-to (file from to snippet &optional cc)
+(defun yo-js-switch-to-no-create (file from to else)
   (let ((target-file (yo-pathifism (yo-js-src-folder) to (substring file (1+ (length from))))))
-          (if (file-exists-p target-file)
-              (find-file target-file)
-            (when (y-or-n-p (concat "file " target-file " does not exist, create? "))
-              (find-file target-file)
-              (insert snippet)
-              (rjsx-mode)
-              (yas-expand)
-              (insert (file-name-base target-file))
-              (funcall (or cc (lambda (_))) target-file)
-              (save-buffer)))))
+    (if (file-exists-p target-file)
+        (find-file target-file)
+      (funcall else target-file))))
 
-(defun yo-js-switch-to-container (file)
+(defun yo-js-switch-to (file from to snippet &optional cc)
+  (yo-js-switch-to-no-create
+   file
+   from
+   to
+   (lambda (target-file)
+     (when (y-or-n-p (concat "file " target-file " does not exist, create? "))
+       (find-file target-file)
+       (insert snippet)
+       (rjsx-mode)
+       (yas-expand)
+       (insert (file-name-base target-file))
+       (funcall (or cc 'ignore) target-file)
+       (save-buffer)))))
+
+(defun yo-js-switch-to-container (file from)
   (yo-js-switch-to
    file
-   "views"
+   from
    "container"
    "container"
    (lambda (target-file)
@@ -269,29 +277,12 @@
         (list (string-trim (substring file 0 (- 0 1 (length (file-name-extension file)))) "/"))))))))
 
 (defun yo-js-switch-to-view (file)
-  (yo-js-switch-to file "container" "views" "component"))
-
-(defun yo-js-switch-to-container* (file)
-  (let ((container-file (yo-pathifism (yo-js-src-folder) "container" (substring file (length "/views")))))
-          (if (file-exists-p container-file)
-              (find-file container-file)
-            (when (y-or-n-p (concat "file " container-file " does not exist, create? "))
-              (find-file container-file)
-              (insert "container")
-              (rjsx-mode)
-              (yas-expand)
-              (insert (file-name-base container-file))
-              (yas-next-field)
-              (insert
-               (join
-                "/"
-                (append
-                 (cdr
-                  (mapcar
-                   (lambda (_) "..")
-                   (split-string (string-trim file "/") "/")))
-                 (list (string-trim (substring file 0 (- 0 1 (length (file-name-extension file)))) "/")))))
-              (save-buffer)))))
+  (yo-js-switch-to-no-create
+   file
+   "container"
+   "components"
+   (lambda (_)
+     (yo-js-switch-to file "container" "views" "component"))))
 
 (defun yo-js-switch-to-view/container ()
   (interactive)
@@ -299,11 +290,26 @@
     (error "you are not in a file under the react root"))
   (let ((file (substring (buffer-file-name) (length (yo-js-src-folder)))))
     (cond
-     ((string-match-p "^/views" file)
-      (yo-js-switch-to-container file))
+     ((or (string-match "^/\\(views\\)" file)
+          (string-match "^/\\(components\\)" file))
+      (yo-js-switch-to-container file (match-string 1 file)))
      ((string-match-p "^/container" file)
       (yo-js-switch-to-view file))
      (t (message "this is no view or container")))))
+
+(defun yo-js-switch-to-component/doc ()
+  (interactive)
+  (if (eq 'rjsx-mode major-mode)
+      (let ((file (substring (buffer-file-name) (length (yo-js-src-folder)))))
+        (yo-js-switch-to
+         (concat (substring file 0 (- (length file) (length (file-name-extension file))))
+                 "md")
+         "" "docs" "x"))
+    (let ((file (substring (buffer-file-name) (length (yo-js-src-folder)))))
+      (yo-js-switch-to
+       (concat (substring file 0 (- (length file) (length (file-name-extension file))))
+               "js")
+       "docs" "" "x"))))
 
 (defun yo-js-split-view/container (how)
   (funcall how)
