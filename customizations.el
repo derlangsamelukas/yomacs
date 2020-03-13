@@ -179,7 +179,7 @@ Indents the line at the end."
 (add-hook
  'php-mode-hook
  (lambda ()
-   (when (string-match-p "^/var/www/html/(my-)?doll" (or (buffer-file-name) ""))
+   (when (string-match-p "^/var/www/html/\\(my-\\)?doll" (or (buffer-file-name) ""))
      (setq indent-tabs-mode t))
    (add-hook 'post-command-hook 'yo-php-const-to-dollar nil t)
    ;; (remove-hook 'post-command-hook 'yo-php-const-to-dollar t)
@@ -463,7 +463,7 @@ If N is negative, find the next or Nth next match."
 (global-set-key (kbd "C-y") 'yo-yank)
 (global-set-key (kbd "M-y") 'helm-show-kill-ring)
 (global-set-key (kbd "C-x t") 'yo-edit-main-org)
-(global-set-key (kbd "<f12>")    'find-grep-dired)
+(global-set-key (kbd "<f12>")    'find-name-dired)
 
 (global-unset-key (kbd "<insert>"))
 (global-unset-key (kbd "<insertchar>"))
