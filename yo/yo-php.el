@@ -145,20 +145,34 @@
 ;; (add-hook 'post-command-hook 'yo-php-highlight-vars-post-command-hook nil t)
 ;; (remove-hook 'post-command-hook 'yo-php-highlight-vars-post-command-hook t)
 
-(defun yo-highlight-line (line)
-  (let ((inhibit-modification-hooks t))
-    (make-face 'temp-face2)
-    (set-face-underline 'temp-face2 "red")
-    (save-excursion
-      (goto-line line)
-      (put-text-property (line-beginning-position) (line-end-position) 'face 'temp-face2))))
+(setq *yo-highlight-overlay* nil)
+
+(defun yo-highlight-line (line &optional message)
+  (when *yo-highlight-overlay*
+    (delete-overlay *yo-highlight-overlay*))
+  (make-face 'temp-face2)
+  (set-face-underline 'temp-face2 "red")
+  (setq *yo-highlight-overlay*
+        (save-excursion
+          (goto-line line)
+          (make-overlay
+           (line-beginning-position)
+           (line-end-position))))
+  (overlay-put *yo-highlight-overlay* 'face 'temp-face2)
+  (when message
+    (overlay-put *yo-highlight-overlay* 'help-echo message)))
+
+(defun yo-unhighlight-line ()
+  (when *yo-highlight-overlay*
+    (delete-overlay *yo-highlight-overlay*)
+    (setq *yo-highlight-overlay* nil)))
 
 (defun yo-php-lint ()
   (interactive "")
   (save-buffer)
   (let ((output (shell-command-to-string (concat "php -l " (buffer-file-name)))))
     (if (string-match-p "^No syntax errors detected in" output)
-        t
+        (yo-unhighlight-line)
       (let* ((first-line (car (split-string output "\n")))
              (line (string-to-number (car (reverse (split-string first-line " "))))))
         (yo-highlight-line line)

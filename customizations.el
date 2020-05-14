@@ -75,11 +75,11 @@ Indents the line at the end."
      -1))
   (indent-for-tab-command))
 
-(defun yo-yank ()
+(defun yo-yank (&optional prefix)
   "yanks and indents the yanked region"
-  (interactive)
+  (interactive "*P")
   (let ((start (point)))
-    (yank)
+    (yank prefix)
     (indent-region start (point))))
 
 ;; miscellaneous functions
@@ -186,10 +186,10 @@ Indents the line at the end."
    (define-key php-mode-map (kbd "DEL") 'yo-js-backspace)
    (define-key php-mode-map (kbd "RET") 'yo-js-return)
    (define-key php-mode-map (kbd "C-c c") (lambda () (interactive) (if (auto-overlays-in (point-min) (point-max)) (auto-overlay-stop 'php) (auto-overlay-start 'php))))
-   (define-key php-mode-map (kbd "C-d") 'yo-duplicate-current-line)
    (define-key php-mode-map (kbd "A-<up>") 'yo-swap-lines-up)
-   (define-key php-mode-map (kbd "C-d") 'yo-duplicate-current-line)
+   ;; (define-key php-mode-map (kbd "C-d") 'yo-duplicate-current-line)
    (define-key php-mode-map (kbd "C-x C-s") 'yo-php-lint)
+   (define-key php-mode-map (kbd "C-c h") 'display-local-help)
    (define-key php-mode-map (kbd "C-c <RET>") 'yo-add-namespace)
    (define-key php-mode-map (kbd "C-c a") 'yo-php-goto-parameters-of-defun)
    (define-key php-mode-map (kbd "C-c f") 'yo-php-grab-function)
@@ -204,7 +204,6 @@ Indents the line at the end."
 
 (fset 'yo-js-kbd-macro-function-to-value
    (kmacro-lambda-form [?c ?o ?n ?s ?t ?  ?\C-\[ ?\[ ?1 ?\; ?5 ?C ?\C-\[ ?\[ ?1 ?\; ?5 ?C ?\C-\[ ?\[ ?1 ?\; ?6 ?D ?\C-w ?\C-? ?\C-\[ ?\[ ?1 ?\; ?5 ?D ?\C-y ?  ?= ? ] 0 "%d"))
-
 
 (add-hook
  'company-mode-hook
@@ -229,7 +228,7 @@ Indents the line at the end."
     (define-key js2-mode-map (kbd "DEL") 'yo-js-backspace)
     (define-key js2-mode-map (kbd "C-o") 'yo-json-new-object)
     (define-key js2-mode-map (kbd "C-c a") 'yo-js-jump-to-parameters)
-      (js2-mode)
+    (js2-mode)
     (js2-highlight-vars-mode)
     (yo-overlay-load-and-start 'js)))
 (add-hook 'js-mode-hook 'yo-js2-helper)
@@ -241,10 +240,12 @@ Indents the line at the end."
    (define-key rjsx-mode-map (kbd "DEL") 'yo-js-backspace)
    (define-key rjsx-mode-map (kbd "RET") 'yo-js-return)
    (define-key rjsx-mode-map (kbd "C-c RET") 'yo-js-find-missing-module)
-   (define-key rjsx-mode-map (kbd "C-c C-c") 'yo-js-switch-to-view/container)
+   ;; (define-key rjsx-mode-map (kbd "C-c C-c") 'yo-js-switch-to-view/container)
+   (define-key rjsx-mode-map (kbd "C-c C-c") 'yo-to-container/domain)
    (define-key rjsx-mode-map (kbd "C-c 2") 'yo-js-split-view/container-vertically)
    (define-key rjsx-mode-map (kbd "C-c 3") 'yo-js-split-view/container-horizontally)
-   (define-key rjsx-mode-map (kbd "C-c d") 'yo-js-switch-to-component/doc)))
+   (define-key rjsx-mode-map (kbd "C-c d") 'yo-js-switch-to-component/doc)
+   (define-key rjsx-mode-map (kbd "C-c a") 'yo-js-jump-to-parameters)))
 
 (add-hook 'js-mode-hook 'yo-js-project-hook)
 
@@ -252,7 +253,7 @@ Indents the line at the end."
  'rjsx-mode-hook
  (lambda ()
    (require 'swiper)
-   (define-key rjsx-mode-map (kbd "C-d") 'yo-duplicate-current-line)
+   ;; (define-key rjsx-mode-map (kbd "C-d") 'yo-duplicate-current-line)
    (define-key rjsx-mode-map (kbd "C-c s") 'swiper-all)
    (js2-highlight-undeclared-vars)
    (js2-highlight-unused-variables)
@@ -311,10 +312,15 @@ If SKIP-COMMENTS is non-nil, comment nodes are ignored."
 (add-hook
  'org-mode-hook
  (lambda ()
+   (define-key org-mode-map (kbd "C-c d") 'org-shiftright)
    ;; (define-key org-mode-map (kbd "RET") 'yo-newline&indent)
    ))
 
 ;; dired
+(defun yo-dired-open-marked-files ()
+  (interactive "")
+  (mapc 'find-file (dired-get-marked-files)))
+
 (add-hook
  'dired-mode-hook
  (lambda ()
@@ -388,16 +394,16 @@ If N is negative, find the next or Nth next match."
              (insert-and-inherit (eshell-get-history pos)))))))))
 
 ;; c
-(add-hook
- 'c-mode-hook
- (lambda () (define-key c-mode-map (kbd "C-d") 'yo-duplicate-current-line)))
+;; (add-hook
+;;  'c-mode-hook
+;;  (lambda () (define-key c-mode-map (kbd "C-d") 'yo-duplicate-current-line)))
 
 ;; c++
-(add-hook
- 'c++-mode-hook
- (lambda ()
-   (yo-c-set-offset-to-zero)
-   (define-key c++-mode-map (kbd "C-d") 'yo-duplicate-current-line)))
+;; (add-hook
+;;  'c++-mode-hook
+;;  (lambda ()
+;;    (yo-c-set-offset-to-zero)
+;;    (define-key c++-mode-map (kbd "C-d") 'yo-duplicate-current-line)))
  
 ;; java
 (add-hook 'java-mode-hook  'yo-c-set-offset-to-zero)
@@ -448,12 +454,12 @@ If N is negative, find the next or Nth next match."
 (global-set-key (kbd "<f6>")    'iedit-mode)
 (global-set-key (kbd "C-h")     'yo-delete-word-backward)
 (global-set-key [(C delete)]    'yo-delete-word)
-(global-set-key (kbd "C-k")     'yo-delete-line)
+;; (global-set-key (kbd "C-k")     'yo-delete-line)
 (global-set-key (kbd "C-x x")   'compile)
 (global-set-key [home]          'yo-smart-beginning-of-line)
 (global-set-key (kbd "C-a")     'yo-smart-beginning-of-line)
 (global-set-key (kbd "C-c C-d") 'ace-jump-mode)
-(global-set-key (kbd "C-d")     'yo-duplicate-current-line)
+;; (global-set-key (kbd "C-d")     'yo-duplicate-current-line)
 (global-set-key [(M up)]        'yo-swap-lines-up)
 (global-set-key [(M down)]      'yo-swap-lines-down)
 (global-set-key [(M left)]      'pop-tmp-bookmark)
@@ -463,7 +469,7 @@ If N is negative, find the next or Nth next match."
 (global-set-key (kbd "C-y") 'yo-yank)
 (global-set-key (kbd "M-y") 'helm-show-kill-ring)
 (global-set-key (kbd "C-x t") 'yo-edit-main-org)
-(global-set-key (kbd "<f12>")    'find-name-dired)
+(global-set-key (kbd "<f12>")    'yo-find-name-dired)
 
 (global-unset-key (kbd "<insert>"))
 (global-unset-key (kbd "<insertchar>"))

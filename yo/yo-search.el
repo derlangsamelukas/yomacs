@@ -43,4 +43,16 @@
       (find-file (car result)))
      (t (message "no files found...")))))
 
+(defun yo-find-name-dired (pattern prefix)
+  (interactive "sFind-name (wildcard): \np")
+  (if (equal prefix 1)
+      (let ((dir default-directory))
+        (cl-loop
+         while t
+         do (setf dir (file-name-as-directory (expand-file-name dir)))
+         while (not (equal "/" dir))
+         when (file-directory-p (concat dir ".git")) return (find-name-dired dir pattern)
+         do (setf dir (concat dir ".."))))
+    (execute-extended-command nil "find-name-dired")))
+
 (provide 'yo-search)

@@ -23,4 +23,5 @@
     (fringe-mode 20)
     (yo-update-mode-line)
     (yas-global-mode 1)
-    (blink-cursor-mode -1)))
+    (blink-cursor-mode -1)
+    (ws-butler-global-mode 1)))

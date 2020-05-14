@@ -509,4 +509,16 @@
   (js2-highlight-vars-mode)
   (yo-overlay-load-and-start 'js))
 
+(defun yo-to-container/domain ()
+  (interactive)
+  (let ((full-name (buffer-name)))
+    (unless (string-match "\\(^.*\\)<\\(\\(domain\\)\\|\\(container\\)\\)>$" full-name)
+      (error "not in a domain / container file"))
+    (let* ((name (match-string 1 full-name))
+           (type (if (string-equal (match-string 2 full-name) "domain") "container" "domain"))
+           (buffer (cl-find-if (lambda (buffer) (string-match-p (format "^%s<%s>$" name type) (buffer-name buffer))) (buffer-list))))
+      (unless buffer
+        (error "no corresponding buffer found"))
+      (switch-to-buffer buffer))))
+
 (provide 'yo-js-modules)
